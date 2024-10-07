@@ -1,0 +1,18 @@
+diff --git a/lib/mount.c b/lib/mount.c
+index d71e6fc..051793b 100644
+--- a/lib/mount.c
++++ b/lib/mount.c
+@@ -119,8 +119,11 @@ static const struct fuse_opt fuse_mount_opts[] = {
+ 
+ static void exec_fusermount(const char *argv[])
+ {
+-	execv(FUSERMOUNT_DIR "/" FUSERMOUNT_PROG, (char **) argv);
+-	execvp(FUSERMOUNT_PROG, (char **) argv);
++	const char *prog = getenv("FUSERMOUNT_PROG");
++	if (prog)
++		execvp(prog, (char **) argv);
++	execvp("fusermount3", (char **) argv);
++	execvp("fusermount", (char **) argv);
+ }
+ 
+ void fuse_mount_version(void)

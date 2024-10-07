@@ -1,0 +1,13 @@
+[binaries]
+c = 'riscv64-linux-musl-gcc'
+cpp = 'riscv64-linux-musl-g++'
+ar = 'riscv64-linux-musl-ar'
+strip = 'riscv64-linux-musl-strip'
+pkg-config = 'pkg-config'
+cmake = 'cmake'
+
+[host_machine]
+system = 'linux'
+cpu_family = 'riscv64'
+cpu = 'riscv64'
+endian = 'little'
