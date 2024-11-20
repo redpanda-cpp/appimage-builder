@@ -487,7 +487,7 @@ def _qtbase(ver: str, paths: ProjectPaths, info: ProfileInfo, jobs: int):
     '-device', 'linux-generic-g++',
     '-device-option', f'CROSS_COMPILE={info.target}-',
     '-qt-host-path', f'{paths.h_prefix}/qt',
-    '-pch',
+    '-no-pch',
     '-no-ltcg',
     '-linker', linker_arg,
     '-no-unity-build',

@@ -117,7 +117,7 @@ def _qtbase(ver: str, paths: ProjectPaths, info: ProfileInfo, jobs: int):
     '-gc-binaries',
     '-static',
     '-platform', 'linux-g++',
-    '-pch',
+    '-no-pch',
     '-no-ltcg',
     '-linker', 'gold',
     '-no-unity-build',
