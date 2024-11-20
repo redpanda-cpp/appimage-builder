@@ -1,0 +1,56 @@
+name: Build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Build
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - x86_64
+          - aarch64
+          - riscv64
+          - loong64
+          - i686
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build
+        run: |
+          if [[ "${{ matrix.arch }}" == "i686" ]]; then
+            branch="time32"
+          else
+            branch="main"
+          fi
+
+          podman run \
+            --platform linux/amd64 \
+            --rm \
+            --security-opt seccomp=unconfined \
+            --volume $PWD:/mnt \
+            --workdir /mnt \
+            docker.io/amd64/ubuntu:24.04 \
+            bash -c \
+              "./support/dep.sh && ./main.py -a ${{ matrix.arch }} -b $branch"
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.arch }}
+          path: container/${{ matrix.arch }}/qt.tar
+
+      - name: OCI image
+        uses: macbre/push-to-ghcr@master
+        if: github.ref_type == 'tag'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          image_name: redpanda-cpp/appimage-builder-${{ matrix.arch }}
+          dockerfile: container/${{ matrix.arch }}/Dockerfile
+          context: container/${{ matrix.arch }}
+          image_tag: ${{ github.ref_name }}
