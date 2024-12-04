@@ -4,7 +4,7 @@ CHECKSUMS = {
 
   'dbus-1.14.10.tar.xz': 'ba1f21d2bd9d339da2d4aa8780c09df32fea87998b73da24f49ab9df1e36a50f',
 
-  'expat-2.6.3.tar.xz': '274db254a6979bde5aad404763a704956940e465843f2a9bd9ed7af22e2c0efc',
+  'expat-2.6.4.tar.xz': 'a695629dae047055b37d50a0ff4776d1d45d0a4c842cf4ccee158441f55ff7ee',
 
   'fcitx5-qt-5.1.8.tar.gz': 'a09fb653ab855424a5a92c6a634c3726fa19ae85ca7c24716784b3ddd136f201',
 
@@ -18,7 +18,7 @@ CHECKSUMS = {
 
   'gmp-6.3.0.tar.zst': '7f55d73f472c29cc14d7fa985f3654d48829415b649eaf61646b7b33f2a80e27',
 
-  'harfbuzz-10.0.1.tar.xz': 'b2cb13bd351904cb9038f907dc0dee0ae07127061242fe3556b2795c4e9748fc',
+  'harfbuzz-10.1.0.tar.xz': '6ce3520f2d089a33cef0fc48321334b8e0b72141f6a763719aaaecd2779ecb82',
 
   'libX11-1.8.10.tar.xz': '2b3b3dad9347db41dca56beb7db5878f283bde1142f04d9f8e478af435dfdc53',
 
@@ -32,7 +32,7 @@ CHECKSUMS = {
 
   'libxkbcommon-1.7.0.tar.xz': '65782f0a10a4b455af9c6baab7040e2f537520caa2ec2092805cdfd36863b247',
 
-  'libxml2-2.13.4.tar.xz': '65d042e1c8010243e617efb02afda20b85c2160acdbfbcb5b26b80cec6515650',
+  'libxml2-2.13.5.tar.xz': '74fc163217a3964257d3be39af943e08861263c4231f9ef5b496b6f6d4c7b2b6',
 
   'linux-headers-4.19.88-2.tar.xz': 'dc7abf734487553644258a3822cfd429d74656749e309f2b25f09f4282e05588',
 
@@ -43,15 +43,15 @@ CHECKSUMS = {
   'musl-1.1.24.tar.gz': '1370c9a812b2cf2a7d92802510cca0058cc37e66a7bedd70051f0a34015022a3',
   'musl-1.2.5.tar.gz': 'a9a118bbe84d8764da0ea0d28b3ab3fae8477fc7e4085d90102b8596fc7c75e4',
 
-  'qtbase-everywhere-src-6.8.0.tar.xz': '1bad481710aa27f872de6c9f72651f89a6107f0077003d0ebfcc9fd15cba3c75',
+  'qtbase-everywhere-src-6.8.1.tar.xz': '40b14562ef3bd779bc0e0418ea2ae08fa28235f8ea6e8c0cb3bce1d6ad58dcaf',
 
-  'qtsvg-everywhere-src-6.8.0.tar.xz': 'cf7a593d5e520f8177240610d9e55d5b75b0887fe5f385554ff64377f1646199',
+  'qtsvg-everywhere-src-6.8.1.tar.xz': '3d0de73596e36b2daa7c48d77c4426bb091752856912fba720215f756c560dd0',
 
-  'qttools-everywhere-src-6.8.0.tar.xz': '403115d8268503c6cc6e43310c8ae28eb9e605072a5d04e4a2de8b6af39981f7',
+  'qttools-everywhere-src-6.8.1.tar.xz': '9d43d409be08b8681a0155a9c65114b69c9a3fc11aef6487bb7fdc5b283c432d',
 
-  'qttranslations-everywhere-src-6.8.0.tar.xz': '84bf2b67c243cd0c50a08acd7bfa9df2b1965028511815c1b6b65a0687437cb6',
+  'qttranslations-everywhere-src-6.8.1.tar.xz': '635a6093e99152243b807de51077485ceadd4786d4acb135b9340b2303035a4a',
 
-  'qtwayland-everywhere-src-6.8.0.tar.xz': '175758591638ebf1c6fbb66ac11c7fa0eb8d4ed52e9243cc59075d06a6a2060a',
+  'qtwayland-everywhere-src-6.8.1.tar.xz': '2226fbde4e2ddd12f8bf4b239c8f38fd706a54e789e63467dfddc77129eca203',
 
   'squashfuse-0.5.2.tar.gz': 'db0238c5981dabbd80ee09ae15387f390091668ca060a7bc38047912491443d3',
 
@@ -75,7 +75,7 @@ CHECKSUMS = {
 
   'xorgproto-2024.1.tar.xz': '372225fd40815b8423547f5d890c5debc72e88b91088fbfb13158c20495ccb59',
 
-  'xtrans-1.5.0.tar.xz': '1ba4b703696bfddbf40bacf25bce4e3efb2a0088878f017a50e9884b0c8fb1bd',
+  'xtrans-1.5.2.tar.xz': '5c5cbfe34764a9131d048f03c31c19e57fb4c682d67713eab6a65541b4dff86c',
 
   'zlib-1.3.1.tar.gz': '9a93b2b7dfdac77ceba5a558a580e74667dd6fede4585b91eefb60f03b72df23',
 

@@ -55,8 +55,8 @@ def parse_args() -> argparse.Namespace:
 def clean(config: argparse.Namespace, paths: ProjectPaths):
   if paths.build.exists():
     shutil.rmtree(paths.build)
-  if paths.prefix.exists():
-    shutil.rmtree(paths.prefix)
+  if paths.h_prefix.exists():
+    shutil.rmtree(paths.h_prefix)
 
 def prepare_dirs(paths: ProjectPaths):
   paths.assets.mkdir(parents = True, exist_ok = True)
