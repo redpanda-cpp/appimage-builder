@@ -7,198 +7,231 @@ import subprocess
 
 from module.debug import shell_here
 from module.path import ProjectPaths
-from module.profile import BranchVersions, ProfileInfo
-from module.util import cflags_host, cmake_build, cmake_install, configure, ensure, make_default, make_install, meson_compile, meson_install, meson_setup, qt_configure_module
+from module.profile import BranchProfile
+from module.util import ensure, overlayfs_ro
+from module.util import cflags_host, configure, make_default, make_destdir_install
+from module.util import cmake_build, cmake_destdir_install, qt_configure_module
+from module.util import meson_build, meson_config, meson_destdir_install
 
-def _gmp(ver: str, paths: ProjectPaths, info: ProfileInfo, jobs: int):
-  build_dir = paths.gmp / 'build-host'
+def _gmp(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
+  build_dir = paths.src_dir.gmp / 'build-host'
   ensure(build_dir)
-  configure('gmp', build_dir, [
-    f'--prefix={paths.h_prefix}',
+
+  configure(build_dir, [
+    '--prefix=/usr/local',
     '--disable-assembly',
     '--enable-static',
     '--disable-shared',
     *cflags_host(),
   ])
-  make_default('gmp', build_dir, jobs)
-  make_install('gmp', build_dir)
+  make_default(build_dir, config.jobs)
+  make_destdir_install(build_dir, paths.layer_host.gmp)
 
-def _mpfr(ver: str, paths: ProjectPaths, info: ProfileInfo, jobs: int):
-  build_dir = paths.mpfr / 'build-host'
+def _mpfr(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
+  build_dir = paths.src_dir.mpfr / 'build-host'
   ensure(build_dir)
-  configure('mpfr', build_dir, [
-    f'--prefix={paths.h_prefix}',
-    f'--with-gmp={paths.h_prefix}',
-    '--enable-static',
+
+  with overlayfs_ro('/usr/local', [
+    paths.layer_host.gmp / 'usr/local',
+  ]):
+    configure(build_dir, [
+      '--prefix=/usr/local',
+      '--enable-static',
+      '--disable-shared',
+      *cflags_host(),
+    ])
+    make_default(build_dir, config.jobs)
+    make_destdir_install(build_dir, paths.layer_host.mpfr)
+
+def _mpc(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
+  build_dir = paths.src_dir.mpc / 'build-host'
+  ensure(build_dir)
+
+  with overlayfs_ro('/usr/local', [
+    paths.layer_host.gmp / 'usr/local',
+    paths.layer_host.mpfr / 'usr/local',
+  ]):
+    configure(build_dir, [
+      '--prefix=/usr/local',
+      '--enable-static',
+      '--disable-shared',
+      *cflags_host(),
+    ])
+    make_default(build_dir, config.jobs)
+    make_destdir_install(build_dir, paths.layer_host.mpc)
+
+def _expat(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
+  build_dir = paths.src_dir.expat / 'build-host'
+  ensure(build_dir)
+
+  configure(build_dir, [
+    '--prefix=/usr/local',
     '--disable-shared',
+    '--enable-static',
     *cflags_host(),
   ])
-  make_default('mpfr', build_dir, jobs)
-  make_install('mpfr', build_dir)
+  make_default(build_dir, config.jobs)
+  make_destdir_install(build_dir, paths.layer_host.expat)
 
-def _mpc(ver: str, paths: ProjectPaths, info: ProfileInfo, jobs: int):
-  build_dir = paths.mpc / 'build-host'
+def _ffi(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
+  build_dir = paths.src_dir.ffi / 'build-host'
   ensure(build_dir)
-  configure('mpc', build_dir, [
-    f'--prefix={paths.h_prefix}',
-    f'--with-gmp={paths.h_prefix}',
-    f'--with-mpfr={paths.h_prefix}',
-    '--enable-static',
-    '--disable-shared',
-    *cflags_host(),
-  ])
-  make_default('mpc', build_dir, jobs)
-  make_install('mpc', build_dir)
 
-def _expat(ver: str, paths: ProjectPaths, info: ProfileInfo, jobs: int):
-  build_dir = paths.expat / 'build-host'
-  ensure(build_dir)
-  configure('expat', build_dir, [
-    f'--prefix={paths.h_prefix}',
-    '--disable-shared',
-    '--enable-static',
-    *cflags_host(),
-  ])
-  make_default('expat', build_dir, jobs)
-  make_install('expat', build_dir)
-
-def _ffi(ver: str, paths: ProjectPaths, info: ProfileInfo, jobs: int):
-  build_dir = paths.ffi / 'build-host'
-  ensure(build_dir)
-  configure('ffi', build_dir, [
-    f'--prefix={paths.h_prefix}',
+  configure(build_dir, [
+    '--prefix=/usr/local',
     '--disable-shared',
     '--enable-static',
     '--disable-multi-os-directory',
     *cflags_host(),
   ])
-  make_default('ffi', build_dir, jobs)
-  make_install('ffi', build_dir)
+  make_default(build_dir, config.jobs)
+  make_destdir_install(build_dir, paths.layer_host.ffi)
 
-def _dbus(ver: str, paths: ProjectPaths, info: ProfileInfo, jobs: int):
-  build_dir = paths.dbus / 'build-host'
+def _dbus(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
+  build_dir = paths.src_dir.dbus / 'build-host'
   ensure(build_dir)
-  configure('dbus', build_dir, [
-    f'--prefix={paths.h_prefix}',
-    '--disable-shared',
-    '--enable-static',
-    *cflags_host(),
-  ])
-  make_default('dbus', build_dir, jobs)
-  make_install('dbus', build_dir)
 
-def _wayland(ver: str, paths: ProjectPaths, info: ProfileInfo, jobs: int):
-  build_dir = paths.wayland / 'build-host'
-  meson_setup('wayland', paths.wayland, build_dir, [
-    '--prefix', paths.h_prefix,
-    '--libdir', paths.h_prefix / 'lib',
-    '--default-library', 'static',
-    '--prefer-static',
-    '-Dscanner=true',
-    '-Dtests=false',
-    '-Ddocumentation=false',
-    '-Ddtd_validation=false',
-    '-Dicon_directory=/usr/share/icons',
-    '--buildtype', 'minsize', '--strip',
-  ])
-  meson_compile('wayland', build_dir, jobs)
-  meson_install('wayland', build_dir)
+  with overlayfs_ro('/usr/local', [
+    paths.layer_host.expat / 'usr/local',
+  ]):
+    configure(build_dir, [
+      '--prefix=/usr/local',
+      '--disable-shared',
+      '--enable-static',
+      *cflags_host(),
+    ])
+    make_default(build_dir, config.jobs)
+    make_destdir_install(build_dir, paths.layer_host.dbus)
 
-def _qtbase(ver: str, paths: ProjectPaths, info: ProfileInfo, jobs: int):
-  build_dir = paths.qtbase / 'build-host'
+def _wayland(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
+  build_dir = paths.src_dir.wayland / 'build-host'
   ensure(build_dir)
-  configure('qtbase', build_dir, [
-    '-prefix', paths.h_prefix / 'qt',
-    # configure meta
-    # build options
-    '-cmake-generator', 'Ninja',
-    '-release',
-    '-optimize-size',
-    '-gc-binaries',
-    '-static',
-    '-platform', 'linux-g++',
-    '-no-pch',
-    '-no-ltcg',
-    '-linker', 'gold',
-    '-no-unity-build',
-    # build environment
-    '-no-pkg-config',
-    # component selection
-    '-nomake', 'examples',
-    '-gui',
-    '-no-widgets',
-    '-dbus-linked',
-    # core options
-    '-qt-doubleconversion',
-    '-no-glib',
-    '-no-icu',
-    '-qt-pcre',
-    '-qt-zlib',
-    # network options
-    '-no-ssl',
-    # gui, printing, widget options
-    '-no-cups',
-    '-no-fontconfig',
-    '-no-freetype',
-    '-no-harfbuzz',
-    '-no-opengl',
-    '-no-xcb',
-    '-no-libpng',
-    '-no-libjpeg',
-    # database options
-    '-sql-sqlite',
-    '-qt-sqlite',
-    # cmake variables
-    f'CMAKE_PREFIX_PATH={paths.h_prefix}',
-  ])
-  cmake_build('qtbase', build_dir, jobs)
-  cmake_install('qtbase', build_dir)
 
-def _qttools(ver: str, paths: ProjectPaths, info: ProfileInfo, jobs: int):
-  build_dir = paths.qttools / 'build-host'
+  with overlayfs_ro('/usr/local', [
+    paths.layer_host.expat / 'usr/local',
+    paths.layer_host.ffi / 'usr/local',
+  ]):
+    meson_config(paths.src_dir.wayland, build_dir, [
+      '--prefix', '/usr/local',
+      '--libdir', '/usr/local/lib',
+      '-Dscanner=true',
+      '-Dtests=false',
+      '-Ddocumentation=false',
+      '-Ddtd_validation=false',
+      '-Dicon_directory=/usr/share/icons',
+    ])
+    meson_build(build_dir, config.jobs)
+    meson_destdir_install(build_dir, destdir = paths.layer_host.wayland)
+
+def _qtbase(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
+  build_dir = paths.src_dir.qtbase / 'build-host'
   ensure(build_dir)
-  qt_configure_module('qttools', paths.qttools, build_dir, [
-    '-no-feature-assistant',
-    '-no-feature-designer',
-    '-no-feature-distancefieldgenerator',
-    '-no-feature-kmap2qmap',
-    '-feature-linguist',
-    '-no-feature-pixeltool',
-    '-no-feature-qdbus',
-    '-no-feature-qdoc',
-    '-no-feature-qev',
-    '-no-feature-qtattributionsscanner',
-    '-no-feature-qtdiag',
-    '-no-feature-qtplugininfo',
-    f'CMAKE_PREFIX_PATH={paths.h_prefix}',
-  ])
-  cmake_build('qttools', build_dir, jobs)
-  cmake_install('qttools', build_dir)
 
-def _qtwayland(ver: str, paths: ProjectPaths, info: ProfileInfo, jobs: int):
-  build_dir = paths.qtwayland / 'build-host'
+  with overlayfs_ro('/usr/local', [
+    paths.layer_host.dbus / 'usr/local',
+    paths.layer_host.wayland / 'usr/local',
+  ]):
+    configure(build_dir, [
+      '-prefix', '/usr/local',
+      # configure meta
+      # build options
+      '-cmake-generator', 'Ninja',
+      '-release',
+      '-gc-binaries',
+      '-static',
+      '-platform', 'linux-g++',
+      '-no-pch',
+      '-no-ltcg',
+      '-linker', 'gold',
+      '-no-unity-build',
+      # build environment
+      '-no-pkg-config',
+      # component selection
+      '-nomake', 'examples',
+      '-gui',
+      '-no-widgets',
+      '-dbus-linked',
+      # core options
+      '-qt-doubleconversion',
+      '-no-glib',
+      '-no-icu',
+      '-qt-pcre',
+      '-qt-zlib',
+      # network options
+      '-no-ssl',
+      # gui, printing, widget options
+      '-no-cups',
+      '-no-fontconfig',
+      '-no-freetype',
+      '-no-harfbuzz',
+      '-no-opengl',
+      '-no-xcb',
+      '-no-libpng',
+      '-no-libjpeg',
+      # database options
+      '-sql-sqlite',
+      '-qt-sqlite',
+    ])
+    cmake_build(build_dir, config.jobs)
+    cmake_destdir_install(build_dir, paths.layer_host.qtbase)
+
+def _qttools(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
+  build_dir = paths.src_dir.qttools / 'build-host'
   ensure(build_dir)
-  qt_configure_module('qtwayland', paths.qtwayland, build_dir, [
-    '-no-feature-wayland-server',
-    f'CMAKE_PREFIX_PATH={paths.h_prefix}',
-  ])
-  cmake_build('qtwayland', build_dir, jobs)
-  cmake_install('qtwayland', build_dir)
 
-def build_host_lib(ver: BranchVersions, paths: ProjectPaths, info: ProfileInfo, config: argparse.Namespace):
-  _gmp(ver.gmp, paths, info, config.jobs)
-  _mpfr(ver.mpfr, paths, info, config.jobs)
-  _mpc(ver.mpc, paths, info, config.jobs)
+  with overlayfs_ro('/usr/local', [
+    paths.layer_host.qtbase / 'usr/local',
+  ]):
+    qt_configure_module(paths.src_dir.qttools, build_dir, [
+      '-no-feature-assistant',
+      '-no-feature-designer',
+      '-no-feature-distancefieldgenerator',
+      '-no-feature-kmap2qmap',
+      '-feature-linguist',
+      '-no-feature-pixeltool',
+      '-no-feature-qdbus',
+      '-no-feature-qdoc',
+      '-no-feature-qev',
+      '-no-feature-qtattributionsscanner',
+      '-no-feature-qtdiag',
+      '-no-feature-qtplugininfo',
+    ])
+    cmake_build(build_dir, config.jobs)
+    cmake_destdir_install(build_dir, paths.layer_host.qttools)
 
-  _expat(ver.expat, paths, info, config.jobs)
-  _ffi(ver.ffi, paths, info, config.jobs)
+def _qtwayland(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
+  build_dir = paths.src_dir.qtwayland / 'build-host'
+  ensure(build_dir)
 
-  _dbus(ver.dbus, paths, info, config.jobs)
-  _wayland(ver.wayland, paths, info, config.jobs)
+  with overlayfs_ro('/usr/local', [
+    paths.layer_host.qtbase / 'usr/local',
+    paths.layer_host.wayland / 'usr/local',
+  ]):
+    qt_configure_module(paths.src_dir.qtwayland, build_dir, [
+      '-no-feature-wayland-server',
+    ])
+    cmake_build(build_dir, config.jobs)
+    cmake_destdir_install(build_dir, paths.layer_host.qtwayland)
 
-  _qtbase(ver.qt, paths, info, config.jobs)
-  old_path = os.environ['PATH']
-  os.environ['PATH'] = f'{paths.h_prefix}/qt/bin:{old_path}'
-  _qttools(ver.qt, paths, info, config.jobs)
-  _qtwayland(ver.qt, paths, info, config.jobs)
-  os.environ['PATH'] = old_path
+def build_host_lib(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
+  os.environ['PKG_CONFIG_PATH'] = '/usr/local/lib/pkgconfig'
+
+  # toolchain
+  _gmp(ver, paths, config)
+  _mpfr(ver, paths, config)
+  _mpc(ver, paths, config)
+
+  # misc. round 1
+  _expat(ver, paths, config)
+  _ffi(ver, paths, config)
+
+  # misc. round 2
+  _dbus(ver, paths, config)
+  _wayland(ver, paths, config)
+
+  # host Qt
+  _qtbase(ver, paths, config)
+  _qttools(ver, paths, config)
+  _qtwayland(ver, paths, config)
+
+  del os.environ['PKG_CONFIG_PATH']

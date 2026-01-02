@@ -1,31 +1,35 @@
 import argparse
 import logging
+import os
 from packaging.version import Version
 from shutil import copyfile
 import subprocess
 
 from module.debug import shell_here
 from module.path import ProjectPaths
-from module.profile import BranchVersions, ProfileInfo
-from module.util import cflags_host, cflags_target, configure, ensure, make_custom, make_default, make_install
+from module.profile import BranchProfile
+from module.util import ensure, overlayfs_ro
+from module.util import cflags_host, cflags_target, configure, make_custom, make_default, make_destdir_install, overlayfs_ro
+from module.util import meson_build, meson_config, meson_destdir_install
 
-def _linux_headers(ver: str, paths: ProjectPaths, info: ProfileInfo, jobs: int):
-  make_custom('linux-headers', paths.linux_headers, [
-    f'ARCH={info.kernel_arch}',
-    f'prefix={paths.prefix}',
+def _linux_headers(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
+  make_custom(paths.src_dir.linux_headers, [
+    f'ARCH={ver.kernel_arch}',
+    f'prefix={paths.layer_x.linux}/usr/local/{ver.target}',
     'install',
   ], jobs = 1)
 
-def _binutils(ver: str, paths: ProjectPaths, info: ProfileInfo, jobs: int):
+def _binutils(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
   gold_arg = '--enable-gold'
   if info.arch in ('riscv64', 'loong64'):
     gold_arg = '--disable-gold'
 
-  build_dir = paths.binutils / 'build-x'
+  build_dir = paths.src_dir.binutils / 'build-x'
   ensure(build_dir)
-  configure('binutils', build_dir, [
-    f'--prefix={paths.h_prefix}',
-    f'--target={info.target}',
+
+  configure(build_dir, [
+    '--prefix=/usr/local',
+    f'--target={ver.target}',
     # static build
     '--disable-shared',
     '--enable-static',
@@ -36,79 +40,139 @@ def _binutils(ver: str, paths: ProjectPaths, info: ProfileInfo, jobs: int):
     '--disable-nls',
     *cflags_host(),
   ])
-  make_default('binutils', build_dir, jobs)
-  make_install('binutils', build_dir)
+  make_default(build_dir, config.jobs)
+  make_destdir_install(build_dir, paths.layer_x.binutils)
 
-def _gcc(ver: str, paths: ProjectPaths, info: ProfileInfo, jobs: int):
-  build_dir = paths.gcc / 'build-x'
+def _gcc(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
+  build_dir = paths.src_dir.gcc / 'build-x'
   ensure(build_dir)
-  configure('gcc', build_dir, [
-    f'--prefix={paths.h_prefix}',
-    f'--with-gcc-major-version-only',
-    f'--target={info.target}',
-    # static build
-    '--disable-plugin',
-    '--disable-shared',
-    '--enable-static',
-    # features
-    '--enable-checking=release',
-    '--enable-default-pie',
-    '--disable-dependency-tracking',
-    '--enable-host-pie',
-    '--enable-languages=c,c++',
-    '--disable-libgomp',
-    '--disable-libsanitizer',
-    '--enable-lto',
-    '--disable-multilib',
-    '--disable-nls',
-    # packages
-    f'--with-gmp={paths.h_prefix}',
-    '--without-libcc1',
-    '--without-libiconv',
-    '--without-libintl',
-    f'--with-mpc={paths.h_prefix}',
-    f'--with-mpfr={paths.h_prefix}',
-    *cflags_host(),
-    *cflags_target('_FOR_TARGET'),
-  ])
-  make_custom('gcc (all-gcc)', build_dir, ['all-gcc'], jobs)
-  make_custom('gcc (install-gcc)', build_dir, ['install-gcc'], jobs = 1)
+
+  with overlayfs_ro('/usr/local', [
+    paths.layer_host.gmp / 'usr/local',
+    paths.layer_host.mpfr / 'usr/local',
+    paths.layer_host.mpc / 'usr/local',
+
+    paths.layer_x.binutils / 'usr/local',
+  ]):
+    configure(build_dir, [
+      '--prefix=/usr/local',
+      f'--with-gcc-major-version-only',
+      f'--target={ver.target}',
+      # static build
+      '--disable-plugin',
+      '--disable-shared',
+      '--enable-static',
+      # features
+      '--enable-checking=release',
+      '--enable-default-pie',
+      '--disable-dependency-tracking',
+      '--enable-host-pie',
+      '--enable-languages=c,c++',
+      '--disable-libgomp',
+      '--disable-libsanitizer',
+      '--enable-lto',
+      '--disable-multilib',
+      '--disable-nls',
+      # packages
+      '--with-gmp=/usr/local',
+      '--without-libcc1',
+      '--without-libiconv',
+      '--without-libintl',
+      '--with-mpc=/usr/local',
+      '--with-mpfr=/usr/local',
+      *cflags_host(),
+      *cflags_target('_FOR_TARGET'),
+    ])
+    make_custom(build_dir, ['all-gcc'], config.jobs)
+    make_custom(build_dir, ['install-gcc', f'DESTDIR={paths.layer_x.gcc}'], jobs = 1)
   yield
 
-  make_custom('gcc (all-target-libgcc)', build_dir, ['all-target-libgcc'], jobs)
-  make_custom('gcc (install-target-libgcc)', build_dir, ['install-target-libgcc'], jobs = 1)
+  with overlayfs_ro('/usr/local', [
+    paths.layer_host.gmp / 'usr/local',
+    paths.layer_host.mpfr / 'usr/local',
+    paths.layer_host.mpc / 'usr/local',
+
+    paths.layer_x.binutils / 'usr/local',
+    paths.layer_x.gcc / 'usr/local',
+    paths.layer_x.linux / 'usr/local',
+    paths.layer_x.musl / 'usr/local',
+  ]):
+    make_custom(build_dir, ['all-target-libgcc'], config.jobs)
+    make_custom(build_dir, ['install-target-libgcc', f'DESTDIR={paths.layer_x.gcc}'], jobs = 1)
   yield
 
-  make_default('gcc', build_dir, jobs)
-  make_install('gcc', build_dir)
+  with overlayfs_ro('/usr/local', [
+    paths.layer_host.gmp / 'usr/local',
+    paths.layer_host.mpfr / 'usr/local',
+    paths.layer_host.mpc / 'usr/local',
+
+    paths.layer_x.binutils / 'usr/local',
+    paths.layer_x.gcc / 'usr/local',
+    paths.layer_x.linux / 'usr/local',
+    paths.layer_x.musl / 'usr/local',
+  ]):
+    make_default(build_dir, config.jobs)
+    make_destdir_install(build_dir, paths.layer_x.gcc)
   yield
 
-def _musl(ver: str, paths: ProjectPaths, info: ProfileInfo, jobs: int):
-  build_dir = paths.musl / 'build-x'
+def _musl(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
+  build_dir = paths.src_dir.musl / 'build-x'
   ensure(build_dir)
-  configure('musl', build_dir, [
-    f'--prefix={paths.prefix}',
-    f'--target={info.target}',
-    '--disable-shared',
-    '--enable-static',
-    *cflags_target(),
+
+  with overlayfs_ro('/usr/local', [
+    paths.layer_x.binutils / 'usr/local',
+    paths.layer_x.gcc / 'usr/local',
+    paths.layer_x.linux / 'usr/local',
+  ]):
+    configure(build_dir, [
+      f'--prefix=/usr/local/{ver.target}',
+      f'--target={ver.target}',
+      '--disable-shared',
+      '--enable-static',
+      *cflags_target(),
+    ])
+    make_custom(build_dir, ['install-headers', f'DESTDIR={paths.layer_x.musl}'], jobs = 1)
+  yield
+
+  with overlayfs_ro('/usr/local', [
+    paths.layer_x.binutils / 'usr/local',
+    paths.layer_x.gcc / 'usr/local',
+    paths.layer_x.linux / 'usr/local',
+    paths.layer_x.musl / 'usr/local',
+  ]):
+    make_default(build_dir, config.jobs)
+    make_destdir_install(build_dir, paths.layer_x.musl)
+  yield
+
+def _pkgconf(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
+  build_dir = paths.src_dir.pkgconf / 'build-x'
+  ensure(build_dir)
+
+  meson_config(paths.src_dir.pkgconf, build_dir, [
+    '--prefix', f'/usr/local/{ver.target}',
+    '--libdir', f'/usr/local/{ver.target}/lib',
+    '-Dtests=disabled',
   ])
-  make_custom('musl (install-headers)', build_dir, ['install-headers'], jobs = 1)
-  yield
+  meson_build(build_dir, config.jobs)
+  meson_destdir_install(build_dir, paths.layer_x.pkgconf)
 
-  make_default('musl', build_dir, jobs)
-  make_install('musl', build_dir)
-  yield
+  bin_dir = paths.layer_x.pkgconf / f'usr/local/bin'
+  alias = bin_dir / f'{ver.target}-pkg-config'
+  ensure(bin_dir)
+  if alias.exists():
+    os.remove(alias)
+  os.symlink(f'../{ver.target}/bin/pkgconf', bin_dir / f'{ver.target}-pkg-config')
 
-def build_cross_toolchain(ver: BranchVersions, paths: ProjectPaths, info: ProfileInfo, config: argparse.Namespace):
-  _linux_headers(ver.linux_headers, paths, info, config.jobs)
+def build_cross_toolchain(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
 
-  _binutils(ver.binutils, paths, info, config.jobs)
+  _linux_headers(ver, paths, config)
 
-  gcc = _gcc(ver.gcc, paths, info, config.jobs)
+  _binutils(ver, paths, config)
+
+  gcc = _gcc(ver, paths, config)
   gcc.__next__()
 
-  musl = _musl(ver.musl, paths, info, config.jobs)
+  musl = _musl(ver, paths, config)
   musl.__next__()
 
   gcc.__next__()
@@ -116,3 +180,5 @@ def build_cross_toolchain(ver: BranchVersions, paths: ProjectPaths, info: Profil
   musl.__next__()
 
   gcc.__next__()
+
+  _pkgconf(ver, paths, config)

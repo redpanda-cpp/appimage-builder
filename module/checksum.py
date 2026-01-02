@@ -43,6 +43,8 @@ CHECKSUMS = {
   'musl-1.1.24.tar.gz': '1370c9a812b2cf2a7d92802510cca0058cc37e66a7bedd70051f0a34015022a3',
   'musl-1.2.5.tar.gz': 'a9a118bbe84d8764da0ea0d28b3ab3fae8477fc7e4085d90102b8596fc7c75e4',
 
+  'pkgconf-pkgconf-2.5.1.tar.gz': '79721badcad1987dead9c3609eb4877ab9b58821c06bdacb824f2c8897c11f2a',
+
   'qtbase-everywhere-src-6.8.1.tar.xz': '40b14562ef3bd779bc0e0418ea2ae08fa28235f8ea6e8c0cb3bce1d6ad58dcaf',
 
   'qtsvg-everywhere-src-6.8.1.tar.xz': '3d0de73596e36b2daa7c48d77c4426bb091752856912fba720215f756c560dd0',

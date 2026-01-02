@@ -8,7 +8,7 @@ from urllib.request import urlopen
 
 from module.checksum import CHECKSUMS
 from module.path import ProjectPaths
-from module.profile import BranchVersions, ProfileInfo
+from module.profile import BranchProfile
 
 
 def _validate_and_download(path: Path, url: str):
@@ -118,302 +118,309 @@ def _patch_done(path: Path):
   mark = path / '.patched'
   mark.touch()
 
-def _appimage_runtime(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  url = f'https://github.com/AppImage/type2-runtime/archive/{ver}.tar.gz'
-  _validate_and_download(paths.appimage_runtime_arx, url)
-  if _check_and_extract(paths.appimage_runtime, paths.appimage_runtime_arx):
-    _patch(paths.appimage_runtime, paths.patch / 'appimage-runtime-trunk-squashfs.patch')
-    _patch_done(paths.appimage_runtime)
+def _appimage_runtime(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://github.com/AppImage/type2-runtime/archive/{ver.appimage_runtime}.tar.gz'
+  _validate_and_download(paths.src_arx.appimage_runtime, url)
+  if _check_and_extract(paths.src_dir.appimage_runtime, paths.src_arx.appimage_runtime):
+    _patch(paths.src_dir.appimage_runtime, paths.patch_dir / 'appimage-runtime-trunk-squashfs.patch')
+    _patch_done(paths.src_dir.appimage_runtime)
 
-def _binutils(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  url = f'https://ftpmirror.gnu.org/gnu/binutils/{paths.binutils_arx.name}'
-  _validate_and_download(paths.binutils_arx, url)
-  _check_and_extract(paths.binutils, paths.binutils_arx)
-  _patch_done(paths.binutils)
+def _binutils(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://ftpmirror.gnu.org/gnu/binutils/{paths.src_arx.binutils.name}'
+  _validate_and_download(paths.src_arx.binutils, url)
+  _check_and_extract(paths.src_dir.binutils, paths.src_arx.binutils)
+  _patch_done(paths.src_dir.binutils)
 
-def _dbus(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  url = f'https://dbus.freedesktop.org/releases/dbus/{paths.dbus_arx.name}'
-  _validate_and_download(paths.dbus_arx, url)
-  _check_and_extract(paths.dbus, paths.dbus_arx)
-  _patch_done(paths.dbus)
+def _dbus(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://dbus.freedesktop.org/releases/dbus/{paths.src_arx.dbus.name}'
+  _validate_and_download(paths.src_arx.dbus, url)
+  _check_and_extract(paths.src_dir.dbus, paths.src_arx.dbus)
+  _patch_done(paths.src_dir.dbus)
 
-def _expat(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  tag = 'R_' + ver.replace('.', '_')
-  url = f'https://github.com/libexpat/libexpat/releases/download/{tag}/{paths.expat_arx.name}'
-  _validate_and_download(paths.expat_arx, url)
-  _check_and_extract(paths.expat, paths.expat_arx)
-  _patch_done(paths.expat)
+def _expat(ver: BranchProfile, paths: ProjectPaths):
+  tag = 'R_' + ver.expat.replace('.', '_')
+  url = f'https://github.com/libexpat/libexpat/releases/download/{tag}/{paths.src_arx.expat.name}'
+  _validate_and_download(paths.src_arx.expat, url)
+  _check_and_extract(paths.src_dir.expat, paths.src_arx.expat)
+  _patch_done(paths.src_dir.expat)
 
-def _fcitx_qt(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  url = f'https://github.com/fcitx/fcitx5-qt/archive/refs/tags/{ver}.tar.gz'
-  _validate_and_download(paths.fcitx_qt_arx, url)
-  _check_and_extract(paths.fcitx_qt, paths.fcitx_qt_arx)
-  _patch_done(paths.fcitx_qt)
+def _fcitx_qt(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://github.com/fcitx/fcitx5-qt/archive/refs/tags/{ver.fcitx_qt}.tar.gz'
+  _validate_and_download(paths.src_arx.fcitx_qt, url)
+  _check_and_extract(paths.src_dir.fcitx_qt, paths.src_arx.fcitx_qt)
+  _patch_done(paths.src_dir.fcitx_qt)
 
-def _ffi(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  url = f'https://github.com/libffi/libffi/releases/download/v{ver}/{paths.ffi_arx.name}'
-  _validate_and_download(paths.ffi_arx, url)
-  _check_and_extract(paths.ffi, paths.ffi_arx)
-  _patch_done(paths.ffi)
+def _ffi(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://github.com/libffi/libffi/releases/download/v{ver.ffi}/{paths.src_arx.ffi.name}'
+  _validate_and_download(paths.src_arx.ffi, url)
+  _check_and_extract(paths.src_dir.ffi, paths.src_arx.ffi)
+  _patch_done(paths.src_dir.ffi)
 
-def _fontconfig(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  url = f'https://www.freedesktop.org/software/fontconfig/release/{paths.fontconfig_arx.name}'
-  _validate_and_download(paths.fontconfig_arx, url)
-  _check_and_extract(paths.fontconfig, paths.fontconfig_arx)
-  _patch_done(paths.fontconfig)
+def _fontconfig(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://www.freedesktop.org/software/fontconfig/release/{paths.src_arx.fontconfig.name}'
+  _validate_and_download(paths.src_arx.fontconfig, url)
+  _check_and_extract(paths.src_dir.fontconfig, paths.src_arx.fontconfig)
+  _patch_done(paths.src_dir.fontconfig)
 
-def _freetype(ver: str, info: ProfileInfo, paths: ProjectPaths):
+def _freetype(ver: BranchProfile, paths: ProjectPaths):
   # download.savannah.gnu.org limits concurrent connections
-  url = f'https://downloads.sourceforge.net/project/freetype/freetype2/{ver}/{paths.freetype_arx.name}'
-  _validate_and_download(paths.freetype_arx, url)
-  _check_and_extract(paths.freetype, paths.freetype_arx)
-  _patch_done(paths.freetype)
+  url = f'https://downloads.sourceforge.net/project/freetype/freetype2/{ver.freetype}/{paths.src_arx.freetype.name}'
+  _validate_and_download(paths.src_arx.freetype, url)
+  _check_and_extract(paths.src_dir.freetype, paths.src_arx.freetype)
+  _patch_done(paths.src_dir.freetype)
 
-def _fuse(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  url = f'https://github.com/libfuse/libfuse/releases/download/fuse-{ver}/{paths.fuse_arx.name}'
-  _validate_and_download(paths.fuse_arx, url)
-  if _check_and_extract(paths.fuse, paths.fuse_arx):
-    _patch(paths.fuse, paths.patch / 'libfuse-try-extra-fusermount.patch')
-    _patch_done(paths.fuse)
+def _fuse(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://github.com/libfuse/libfuse/releases/download/fuse-{ver.fuse}/{paths.src_arx.fuse.name}'
+  _validate_and_download(paths.src_arx.fuse, url)
+  if _check_and_extract(paths.src_dir.fuse, paths.src_arx.fuse):
+    _patch(paths.src_dir.fuse, paths.patch_dir / 'libfuse-try-extra-fusermount.patch')
+    _patch_done(paths.src_dir.fuse)
 
-def _gcc(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  url = f'https://ftpmirror.gnu.org/gcc/gcc-{ver}/{paths.gcc_arx.name}'
-  _validate_and_download(paths.gcc_arx, url)
-  if _check_and_extract(paths.gcc, paths.gcc_arx):
-    _sed(paths.gcc / 'gcc/config/i386/t-linux64', '/m64=/s/lib64/lib/')
-    _patch_done(paths.gcc)
+def _gcc(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://ftpmirror.gnu.org/gcc/gcc-{ver.gcc}/{paths.src_arx.gcc.name}'
+  _validate_and_download(paths.src_arx.gcc, url)
+  if _check_and_extract(paths.src_dir.gcc, paths.src_arx.gcc):
+    _sed(paths.src_dir.gcc / 'gcc/config/i386/t-linux64', '/m64=/s/lib64/lib/')
+    _patch_done(paths.src_dir.gcc)
 
-def _gmp(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  url = f'https://ftpmirror.gnu.org/gmp/{paths.gmp_arx.name}'
-  _validate_and_download(paths.gmp_arx, url)
-  _check_and_extract(paths.gmp, paths.gmp_arx)
-  _patch_done(paths.gmp)
+def _gmp(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://ftpmirror.gnu.org/gmp/{paths.src_arx.gmp.name}'
+  _validate_and_download(paths.src_arx.gmp, url)
+  _check_and_extract(paths.src_dir.gmp, paths.src_arx.gmp)
+  _patch_done(paths.src_dir.gmp)
 
-def _harfbuzz(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  url = f'https://github.com/harfbuzz/harfbuzz/releases/download/{ver}/{paths.harfbuzz_arx.name}'
-  _validate_and_download(paths.harfbuzz_arx, url)
-  _check_and_extract(paths.harfbuzz, paths.harfbuzz_arx)
-  _patch_done(paths.harfbuzz)
+def _harfbuzz(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://github.com/harfbuzz/harfbuzz/releases/download/{ver.harfbuzz}/{paths.src_arx.harfbuzz.name}'
+  _validate_and_download(paths.src_arx.harfbuzz, url)
+  _check_and_extract(paths.src_dir.harfbuzz, paths.src_arx.harfbuzz)
+  _patch_done(paths.src_dir.harfbuzz)
 
-def _linux_headers(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  url = f'https://github.com/sabotage-linux/kernel-headers/releases/download/v{ver}/{paths.linux_headers_arx.name}'
-  _validate_and_download(paths.linux_headers_arx, url)
-  _check_and_extract(paths.linux_headers, paths.linux_headers_arx)
-  _patch_done(paths.linux_headers)
+def _linux_headers(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://github.com/sabotage-linux/kernel-headers/releases/download/v{ver.linux_headers}/{paths.src_arx.linux_headers.name}'
+  _validate_and_download(paths.src_arx.linux_headers, url)
+  _check_and_extract(paths.src_dir.linux_headers, paths.src_arx.linux_headers)
+  _patch_done(paths.src_dir.linux_headers)
 
-def _mpc(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  url = f'https://ftpmirror.gnu.org/mpc/{paths.mpc_arx.name}'
-  _validate_and_download(paths.mpc_arx, url)
-  _check_and_extract(paths.mpc, paths.mpc_arx)
-  _patch_done(paths.mpc)
+def _mpc(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://ftpmirror.gnu.org/mpc/{paths.src_arx.mpc.name}'
+  _validate_and_download(paths.src_arx.mpc, url)
+  _check_and_extract(paths.src_dir.mpc, paths.src_arx.mpc)
+  _patch_done(paths.src_dir.mpc)
 
-def _mpfr(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  url = f'https://ftpmirror.gnu.org/mpfr/{paths.mpfr_arx.name}'
-  _validate_and_download(paths.mpfr_arx, url)
-  _check_and_extract(paths.mpfr, paths.mpfr_arx)
-  _patch_done(paths.mpfr)
+def _mpfr(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://ftpmirror.gnu.org/mpfr/{paths.src_arx.mpfr.name}'
+  _validate_and_download(paths.src_arx.mpfr, url)
+  _check_and_extract(paths.src_dir.mpfr, paths.src_arx.mpfr)
+  _patch_done(paths.src_dir.mpfr)
 
-def _musl(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  url = f'https://www.musl-libc.org/releases/{paths.musl_arx.name}'
-  _validate_and_download(paths.musl_arx, url)
-  _check_and_extract(paths.musl, paths.musl_arx)
-  _patch_done(paths.musl)
+def _musl(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://www.musl-libc.org/releases/{paths.src_arx.musl.name}'
+  _validate_and_download(paths.src_arx.musl, url)
+  _check_and_extract(paths.src_dir.musl, paths.src_arx.musl)
+  _patch_done(paths.src_dir.musl)
 
-def _png(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  url = f'https://download.sourceforge.net/libpng/{paths.png_arx.name}'
-  _validate_and_download(paths.png_arx, url)
-  _check_and_extract(paths.png, paths.png_arx)
-  _patch_done(paths.png)
+def _pkgconf(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://github.com/pkgconf/pkgconf/archive/refs/tags/pkgconf-{ver.pkgconf}.tar.gz'
+  _validate_and_download(paths.src_arx.pkgconf, url)
+  _check_and_extract(paths.src_dir.pkgconf, paths.src_arx.pkgconf)
+  _patch_done(paths.src_dir.pkgconf)
 
-def _qtbase(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  v = Version(ver)
+def _png(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://download.sourceforge.net/libpng/{paths.src_arx.png.name}'
+  _validate_and_download(paths.src_arx.png, url)
+  _check_and_extract(paths.src_dir.png, paths.src_arx.png)
+  _patch_done(paths.src_dir.png)
+
+def _qtbase(ver: BranchProfile, paths: ProjectPaths):
+  v = Version(ver.qt)
   branch = f'{v.major}.{v.minor}'
-  url = f'https://download.qt.io/archive/qt/{branch}/{ver}/submodules/{paths.qtbase_arx.name}'
-  _validate_and_download(paths.qtbase_arx, url)
-  _check_and_extract(paths.qtbase, paths.qtbase_arx)
-  _patch_done(paths.qtbase)
+  url = f'https://download.qt.io/archive/qt/{branch}/{ver.qt}/submodules/{paths.src_arx.qtbase.name}'
+  _validate_and_download(paths.src_arx.qtbase, url)
+  _check_and_extract(paths.src_dir.qtbase, paths.src_arx.qtbase)
+  _patch_done(paths.src_dir.qtbase)
 
-def _qtsvg(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  v = Version(ver)
+def _qtsvg(ver: BranchProfile, paths: ProjectPaths):
+  v = Version(ver.qt)
   branch = f'{v.major}.{v.minor}'
-  url = f'https://download.qt.io/archive/qt/{branch}/{ver}/submodules/{paths.qtsvg_arx.name}'
-  _validate_and_download(paths.qtsvg_arx, url)
-  _check_and_extract(paths.qtsvg, paths.qtsvg_arx)
-  _patch_done(paths.qtsvg)
+  url = f'https://download.qt.io/archive/qt/{branch}/{ver.qt}/submodules/{paths.src_arx.qtsvg.name}'
+  _validate_and_download(paths.src_arx.qtsvg, url)
+  _check_and_extract(paths.src_dir.qtsvg, paths.src_arx.qtsvg)
+  _patch_done(paths.src_dir.qtsvg)
 
-def _qttools(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  v = Version(ver)
+def _qttools(ver: BranchProfile, paths: ProjectPaths):
+  v = Version(ver.qt)
   branch = f'{v.major}.{v.minor}'
-  url = f'https://download.qt.io/archive/qt/{branch}/{ver}/submodules/{paths.qttools_arx.name}'
-  _validate_and_download(paths.qttools_arx, url)
-  _check_and_extract(paths.qttools, paths.qttools_arx)
-  _patch_done(paths.qttools)
+  url = f'https://download.qt.io/archive/qt/{branch}/{ver.qt}/submodules/{paths.src_arx.qttools.name}'
+  _validate_and_download(paths.src_arx.qttools, url)
+  _check_and_extract(paths.src_dir.qttools, paths.src_arx.qttools)
+  _patch_done(paths.src_dir.qttools)
 
-def _qttranslations(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  v = Version(ver)
+def _qttranslations(ver: BranchProfile, paths: ProjectPaths):
+  v = Version(ver.qt)
   branch = f'{v.major}.{v.minor}'
-  url = f'https://download.qt.io/archive/qt/{branch}/{ver}/submodules/{paths.qttranslations_arx.name}'
-  _validate_and_download(paths.qttranslations_arx, url)
-  _check_and_extract(paths.qttranslations, paths.qttranslations_arx)
-  _patch_done(paths.qttranslations)
+  url = f'https://download.qt.io/archive/qt/{branch}/{ver.qt}/submodules/{paths.src_arx.qttranslations.name}'
+  _validate_and_download(paths.src_arx.qttranslations, url)
+  _check_and_extract(paths.src_dir.qttranslations, paths.src_arx.qttranslations)
+  _patch_done(paths.src_dir.qttranslations)
 
-def _qtwayland(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  v = Version(ver)
+def _qtwayland(ver: BranchProfile, paths: ProjectPaths):
+  v = Version(ver.qt)
   branch = f'{v.major}.{v.minor}'
-  url = f'https://download.qt.io/archive/qt/{branch}/{ver}/submodules/{paths.qtwayland_arx.name}'
-  _validate_and_download(paths.qtwayland_arx, url)
-  _check_and_extract(paths.qtwayland, paths.qtwayland_arx)
-  _patch_done(paths.qtwayland)
+  url = f'https://download.qt.io/archive/qt/{branch}/{ver.qt}/submodules/{paths.src_arx.qtwayland.name}'
+  _validate_and_download(paths.src_arx.qtwayland, url)
+  _check_and_extract(paths.src_dir.qtwayland, paths.src_arx.qtwayland)
+  _patch_done(paths.src_dir.qtwayland)
 
-def _squashfuse(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  url = f'https://github.com/vasi/squashfuse/archive/{ver}.tar.gz'
-  _validate_and_download(paths.squashfuse_arx, url)
-  if _check_and_extract(paths.squashfuse, paths.squashfuse_arx):
-    _autoreconf(paths.squashfuse)
-    _patch_done(paths.squashfuse)
+def _squashfuse(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://github.com/vasi/squashfuse/archive/{ver.squashfuse}.tar.gz'
+  _validate_and_download(paths.src_arx.squashfuse, url)
+  if _check_and_extract(paths.src_dir.squashfuse, paths.src_arx.squashfuse):
+    _autoreconf(paths.src_dir.squashfuse)
+    _patch_done(paths.src_dir.squashfuse)
 
-def _wayland(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  url = f'https://gitlab.freedesktop.org/wayland/wayland/-/releases/{ver}/downloads/{paths.wayland_arx.name}'
-  _validate_and_download(paths.wayland_arx, url)
-  _check_and_extract(paths.wayland, paths.wayland_arx)
-  _patch_done(paths.wayland)
+def _wayland(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://gitlab.freedesktop.org/wayland/wayland/-/releases/{ver.wayland}/downloads/{paths.src_arx.wayland.name}'
+  _validate_and_download(paths.src_arx.wayland, url)
+  _check_and_extract(paths.src_dir.wayland, paths.src_arx.wayland)
+  _patch_done(paths.src_dir.wayland)
 
-def _x(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  url = f'https://xorg.freedesktop.org/releases/individual/lib/{paths.x_arx.name}'
-  _validate_and_download(paths.x_arx, url)
-  _check_and_extract(paths.x, paths.x_arx)
-  _patch_done(paths.x)
+def _x(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://xorg.freedesktop.org/releases/individual/lib/{paths.src_arx.x.name}'
+  _validate_and_download(paths.src_arx.x, url)
+  _check_and_extract(paths.src_dir.x, paths.src_arx.x)
+  _patch_done(paths.src_dir.x)
 
-def _xau(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  url = f'https://xorg.freedesktop.org/releases/individual/lib/{paths.xau_arx.name}'
-  _validate_and_download(paths.xau_arx, url)
-  _check_and_extract(paths.xau, paths.xau_arx)
-  _patch_done(paths.xau)
+def _xau(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://xorg.freedesktop.org/releases/individual/lib/{paths.src_arx.xau.name}'
+  _validate_and_download(paths.src_arx.xau, url)
+  _check_and_extract(paths.src_dir.xau, paths.src_arx.xau)
+  _patch_done(paths.src_dir.xau)
 
-def _xcb(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  url = f'https://xcb.freedesktop.org/dist/{paths.xcb_arx.name}'
-  _validate_and_download(paths.xcb_arx, url)
-  _check_and_extract(paths.xcb, paths.xcb_arx)
-  _patch_done(paths.xcb)
+def _xcb(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://xcb.freedesktop.org/dist/{paths.src_arx.xcb.name}'
+  _validate_and_download(paths.src_arx.xcb, url)
+  _check_and_extract(paths.src_dir.xcb, paths.src_arx.xcb)
+  _patch_done(paths.src_dir.xcb)
 
-def _xcb_proto(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  url = f'https://xcb.freedesktop.org/dist/{paths.xcb_proto_arx.name}'
-  _validate_and_download(paths.xcb_proto_arx, url)
-  _check_and_extract(paths.xcb_proto, paths.xcb_proto_arx)
-  _patch_done(paths.xcb_proto)
+def _xcb_proto(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://xcb.freedesktop.org/dist/{paths.src_arx.xcb_proto.name}'
+  _validate_and_download(paths.src_arx.xcb_proto, url)
+  _check_and_extract(paths.src_dir.xcb_proto, paths.src_arx.xcb_proto)
+  _patch_done(paths.src_dir.xcb_proto)
 
-def _xcb_util(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  url = f'https://xcb.freedesktop.org/dist/{paths.xcb_util_arx.name}'
-  _validate_and_download(paths.xcb_util_arx, url)
-  _check_and_extract(paths.xcb_util, paths.xcb_util_arx)
-  _patch_done(paths.xcb_util)
+def _xcb_util(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://xcb.freedesktop.org/dist/{paths.src_arx.xcb_util.name}'
+  _validate_and_download(paths.src_arx.xcb_util, url)
+  _check_and_extract(paths.src_dir.xcb_util, paths.src_arx.xcb_util)
+  _patch_done(paths.src_dir.xcb_util)
 
-def _xcb_util_cursor(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  url = f'https://xcb.freedesktop.org/dist/{paths.xcb_util_cursor_arx.name}'
-  _validate_and_download(paths.xcb_util_cursor_arx, url)
-  _check_and_extract(paths.xcb_util_cursor, paths.xcb_util_cursor_arx)
-  _patch_done(paths.xcb_util_cursor)
+def _xcb_util_cursor(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://xcb.freedesktop.org/dist/{paths.src_arx.xcb_util_cursor.name}'
+  _validate_and_download(paths.src_arx.xcb_util_cursor, url)
+  _check_and_extract(paths.src_dir.xcb_util_cursor, paths.src_arx.xcb_util_cursor)
+  _patch_done(paths.src_dir.xcb_util_cursor)
 
-def _xcb_util_image(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  url = f'https://xcb.freedesktop.org/dist/{paths.xcb_util_image_arx.name}'
-  _validate_and_download(paths.xcb_util_image_arx, url)
-  _check_and_extract(paths.xcb_util_image, paths.xcb_util_image_arx)
-  _patch_done(paths.xcb_util_image)
+def _xcb_util_image(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://xcb.freedesktop.org/dist/{paths.src_arx.xcb_util_image.name}'
+  _validate_and_download(paths.src_arx.xcb_util_image, url)
+  _check_and_extract(paths.src_dir.xcb_util_image, paths.src_arx.xcb_util_image)
+  _patch_done(paths.src_dir.xcb_util_image)
 
-def _xcb_util_keysyms(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  url = f'https://xcb.freedesktop.org/dist/{paths.xcb_util_keysyms_arx.name}'
-  _validate_and_download(paths.xcb_util_keysyms_arx, url)
-  _check_and_extract(paths.xcb_util_keysyms, paths.xcb_util_keysyms_arx)
-  _patch_done(paths.xcb_util_keysyms)
+def _xcb_util_keysyms(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://xcb.freedesktop.org/dist/{paths.src_arx.xcb_util_keysyms.name}'
+  _validate_and_download(paths.src_arx.xcb_util_keysyms, url)
+  _check_and_extract(paths.src_dir.xcb_util_keysyms, paths.src_arx.xcb_util_keysyms)
+  _patch_done(paths.src_dir.xcb_util_keysyms)
 
-def _xcb_util_renderutil(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  url = f'https://xcb.freedesktop.org/dist/{paths.xcb_util_renderutil_arx.name}'
-  _validate_and_download(paths.xcb_util_renderutil_arx, url)
-  _check_and_extract(paths.xcb_util_renderutil, paths.xcb_util_renderutil_arx)
-  _patch_done(paths.xcb_util_renderutil)
+def _xcb_util_renderutil(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://xcb.freedesktop.org/dist/{paths.src_arx.xcb_util_renderutil.name}'
+  _validate_and_download(paths.src_arx.xcb_util_renderutil, url)
+  _check_and_extract(paths.src_dir.xcb_util_renderutil, paths.src_arx.xcb_util_renderutil)
+  _patch_done(paths.src_dir.xcb_util_renderutil)
 
-def _xcb_util_wm(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  url = f'https://xcb.freedesktop.org/dist/{paths.xcb_util_wm_arx.name}'
-  _validate_and_download(paths.xcb_util_wm_arx, url)
-  _check_and_extract(paths.xcb_util_wm, paths.xcb_util_wm_arx)
-  _patch_done(paths.xcb_util_wm)
+def _xcb_util_wm(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://xcb.freedesktop.org/dist/{paths.src_arx.xcb_util_wm.name}'
+  _validate_and_download(paths.src_arx.xcb_util_wm, url)
+  _check_and_extract(paths.src_dir.xcb_util_wm, paths.src_arx.xcb_util_wm)
+  _patch_done(paths.src_dir.xcb_util_wm)
 
-def _xkbcommon(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  url = f'https://xkbcommon.org/download/{paths.xkbcommon_arx.name}'
-  _validate_and_download(paths.xkbcommon_arx, url)
-  _check_and_extract(paths.xkbcommon, paths.xkbcommon_arx)
-  _patch_done(paths.xkbcommon)
+def _xkbcommon(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://xkbcommon.org/download/{paths.src_arx.xkbcommon.name}'
+  _validate_and_download(paths.src_arx.xkbcommon, url)
+  _check_and_extract(paths.src_dir.xkbcommon, paths.src_arx.xkbcommon)
+  _patch_done(paths.src_dir.xkbcommon)
 
-def _xml(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  v = Version(ver)
+def _xml(ver: BranchProfile, paths: ProjectPaths):
+  v = Version(ver.xml)
   branch = f'{v.major}.{v.minor}'
-  url = f'https://download.gnome.org/sources/libxml2/{branch}/{paths.xml_arx.name}'
-  _validate_and_download(paths.xml_arx, url)
-  _check_and_extract(paths.xml, paths.xml_arx)
-  _patch_done(paths.xml)
+  url = f'https://download.gnome.org/sources/libxml2/{branch}/{paths.src_arx.xml.name}'
+  _validate_and_download(paths.src_arx.xml, url)
+  _check_and_extract(paths.src_dir.xml, paths.src_arx.xml)
+  _patch_done(paths.src_dir.xml)
 
-def _xorg_proto(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  url = f'https://xorg.freedesktop.org/releases/individual/proto/{paths.xorg_proto_arx.name}'
-  _validate_and_download(paths.xorg_proto_arx, url)
-  _check_and_extract(paths.xorg_proto, paths.xorg_proto_arx)
-  _patch_done(paths.xorg_proto)
+def _xorg_proto(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://xorg.freedesktop.org/releases/individual/proto/{paths.src_arx.xorg_proto.name}'
+  _validate_and_download(paths.src_arx.xorg_proto, url)
+  _check_and_extract(paths.src_dir.xorg_proto, paths.src_arx.xorg_proto)
+  _patch_done(paths.src_dir.xorg_proto)
 
-def _xtrans(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  url = f'https://xorg.freedesktop.org/releases/individual/lib/{paths.xtrans_arx.name}'
-  _validate_and_download(paths.xtrans_arx, url)
-  _check_and_extract(paths.xtrans, paths.xtrans_arx)
-  _patch_done(paths.xtrans)
+def _xtrans(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://xorg.freedesktop.org/releases/individual/lib/{paths.src_arx.xtrans.name}'
+  _validate_and_download(paths.src_arx.xtrans, url)
+  _check_and_extract(paths.src_dir.xtrans, paths.src_arx.xtrans)
+  _patch_done(paths.src_dir.xtrans)
 
-def _z(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  url = f'https://zlib.net/fossils/{paths.z_arx.name}'
-  _validate_and_download(paths.z_arx, url)
-  _check_and_extract(paths.z, paths.z_arx)
-  _patch_done(paths.z)
+def _z(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://zlib.net/fossils/{paths.src_arx.z.name}'
+  _validate_and_download(paths.src_arx.z, url)
+  _check_and_extract(paths.src_dir.z, paths.src_arx.z)
+  _patch_done(paths.src_dir.z)
 
-def _zstd(ver: str, info: ProfileInfo, paths: ProjectPaths):
-  url = f'https://github.com/facebook/zstd/releases/download/v{ver}/{paths.zstd_arx.name}'
-  _validate_and_download(paths.zstd_arx, url)
-  _check_and_extract(paths.zstd, paths.zstd_arx)
-  _patch_done(paths.zstd)
+def _zstd(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://github.com/facebook/zstd/releases/download/v{ver.zstd}/{paths.src_arx.zstd.name}'
+  _validate_and_download(paths.src_arx.zstd, url)
+  _check_and_extract(paths.src_dir.zstd, paths.src_arx.zstd)
+  _patch_done(paths.src_dir.zstd)
 
-def download_and_patch(ver: BranchVersions, paths: ProjectPaths, info: ProfileInfo):
-  _appimage_runtime(ver.appimage_runtime, info, paths)
-  _binutils(ver.binutils, info, paths)
-  _dbus(ver.dbus, info, paths)
-  _expat(ver.expat, info, paths)
-  _ffi(ver.ffi, info, paths)
-  _fcitx_qt(ver.fcitx_qt, info, paths)
-  _fontconfig(ver.fontconfig, info, paths)
-  _freetype(ver.freetype, info, paths)
-  _fuse(ver.fuse, info, paths)
-  _gcc(ver.gcc, info, paths)
-  _gmp(ver.gmp, info, paths)
-  _harfbuzz(ver.harfbuzz, info, paths)
-  _linux_headers(ver.linux_headers, info, paths)
-  _mpc(ver.mpc, info, paths)
-  _mpfr(ver.mpfr, info, paths)
-  _musl(ver.musl, info, paths)
-  _png(ver.png, info, paths)
-  _qtbase(ver.qt, info, paths)
-  _qtsvg(ver.qt, info, paths)
-  _qttools(ver.qt, info, paths)
-  _qttranslations(ver.qt, info, paths)
-  _qtwayland(ver.qt, info, paths)
-  _squashfuse(ver.squashfuse, info, paths)
-  _wayland(ver.wayland, info, paths)
-  _x(ver.x, info, paths)
-  _xau(ver.xau, info, paths)
-  _xcb(ver.xcb, info, paths)
-  _xcb_proto(ver.xcb_proto, info, paths)
-  _xcb_util(ver.xcb_util, info, paths)
-  _xcb_util_cursor(ver.xcb_util_cursor, info, paths)
-  _xcb_util_image(ver.xcb_util_image, info, paths)
-  _xcb_util_keysyms(ver.xcb_util_keysyms, info, paths)
-  _xcb_util_renderutil(ver.xcb_util_renderutil, info, paths)
-  _xcb_util_wm(ver.xcb_util_wm, info, paths)
-  _xkbcommon(ver.xkbcommon, info, paths)
-  _xml(ver.xml, info, paths)
-  _xorg_proto(ver.xorg_proto, info, paths)
-  _xtrans(ver.xtrans, info, paths)
-  _z(ver.z, info, paths)
-  _zstd(ver.zstd, info, paths)
+def download_and_patch(ver: BranchProfile, paths: ProjectPaths):
+  _appimage_runtime(ver, paths)
+  _binutils(ver, paths)
+  _dbus(ver, paths)
+  _expat(ver, paths)
+  _ffi(ver, paths)
+  _fcitx_qt(ver, paths)
+  _fontconfig(ver, paths)
+  _freetype(ver, paths)
+  _fuse(ver, paths)
+  _gcc(ver, paths)
+  _gmp(ver, paths)
+  _harfbuzz(ver, paths)
+  _linux_headers(ver, paths)
+  _mpc(ver, paths)
+  _mpfr(ver, paths)
+  _musl(ver, paths)
+  _pkgconf(ver, paths)
+  _png(ver, paths)
+  _qtbase(ver, paths)
+  _qtsvg(ver, paths)
+  _qttools(ver, paths)
+  _qttranslations(ver, paths)
+  _qtwayland(ver, paths)
+  _squashfuse(ver, paths)
+  _wayland(ver, paths)
+  _x(ver, paths)
+  _xau(ver, paths)
+  _xcb(ver, paths)
+  _xcb_proto(ver, paths)
+  _xcb_util(ver, paths)
+  _xcb_util_cursor(ver, paths)
+  _xcb_util_image(ver, paths)
+  _xcb_util_keysyms(ver, paths)
+  _xcb_util_renderutil(ver, paths)
+  _xcb_util_wm(ver, paths)
+  _xkbcommon(ver, paths)
+  _xml(ver, paths)
+  _xorg_proto(ver, paths)
+  _xtrans(ver, paths)
+  _z(ver, paths)
+  _zstd(ver, paths)

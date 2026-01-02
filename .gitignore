@@ -1,6 +1,6 @@
-/assets
-/build
-/container/*/qt.tar
-/pkg
-
-__pycache__/
+__pycache__
+assets
+build
+container/*/qt.tar
+layer
+pkg

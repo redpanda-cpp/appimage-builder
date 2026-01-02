@@ -32,7 +32,7 @@ jobs:
           podman run \
             --platform linux/amd64 \
             --rm \
-            --security-opt seccomp=unconfined \
+            --cap-add=sys_admin \
             --volume $PWD:/mnt \
             --workdir /mnt \
             docker.io/amd64/ubuntu:24.04 \

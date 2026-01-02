@@ -3,15 +3,24 @@
 import argparse
 import logging
 import os
+from pathlib import Path
 import shutil
 import subprocess
+from subprocess import PIPE
+from typing import Dict, List
 
-from module.cross_toolchain import build_cross_toolchain
-from module.host_lib import build_host_lib
 from module.path import ProjectPaths
 from module.prepare_source import download_and_patch
-from module.profile import get_full_profile
+from module.profile import resolve_profile
+from module.util import ensure, overlayfs_ro
+
+from module.host_lib import build_host_lib
+from module.cross_toolchain import build_cross_toolchain
 from module.target_lib import build_target_lib
+
+def get_gcc_triplet():
+  result = subprocess.run(['gcc', '-dumpmachine'], stdout = PIPE, stderr = PIPE, check = True)
+  return result.stdout.decode('utf-8').strip()
 
 def parse_args() -> argparse.Namespace:
   parser = argparse.ArgumentParser()
@@ -30,6 +39,14 @@ def parse_args() -> argparse.Namespace:
     choices = ['main', 'time32'],
     default = 'main',
     help = 'Qt branch to build',
+  )
+
+  gcc_triplet = get_gcc_triplet()
+  parser.add_argument(
+    '--host',
+    type = str,
+    default = gcc_triplet,
+    help = 'Host system triplet',
   )
 
   parser.add_argument(
@@ -53,25 +70,55 @@ def parse_args() -> argparse.Namespace:
   return result
 
 def clean(config: argparse.Namespace, paths: ProjectPaths):
-  if paths.build.exists():
-    shutil.rmtree(paths.build)
-  if paths.h_prefix.exists():
-    shutil.rmtree(paths.h_prefix)
+  if paths.build_dir.exists():
+    shutil.rmtree(paths.build_dir)
+  if paths.layer_dir.exists():
+    shutil.rmtree(paths.layer_dir)
 
 def prepare_dirs(paths: ProjectPaths):
-  paths.assets.mkdir(parents = True, exist_ok = True)
-  paths.build.mkdir(parents = True, exist_ok = True)
-  paths.dist.mkdir(parents = True, exist_ok = True)
+  ensure(paths.assets_dir)
+  ensure(paths.build_dir)
+  ensure(paths.dist_dir)
+
+def check_file_collision(layers: list[Path]):
+  file_to_package_map: Dict[str, List[str]] = {}
+  for layer in layers:
+    for file in layer.glob('**/*'):
+      if not file.is_dir():
+        file_path = str(file.relative_to(layer))
+        if file_path in file_to_package_map:
+          file_to_package_map[file_path].append(str(layer))
+        else:
+          file_to_package_map[file_path] = [str(layer)]
+
+  ok = True
+  for file, packages in file_to_package_map.items():
+    if len(packages) > 1:
+      ok = False
+      print(f'file collision: {file} in {packages}')
+
+  if not ok:
+    raise Exception('file collision')
 
 def package(paths: ProjectPaths):
-  ret = subprocess.run([
-    'tar',
-    '-cf',
-    paths.container / 'qt.tar',
-    paths.h_prefix,
-  ])
-  if ret.returncode != 0:
-    raise Exception('Failed to package')
+  layers = []
+  for layer_group in (paths.layer_host, paths.layer_x, paths.layer_target):
+    for k, v in layer_group._asdict().items():
+      if k in ('prefix', 'freetype_decycle'):
+        continue
+      layers.append(v)
+
+  check_file_collision(layers)
+
+  with overlayfs_ro('/usr/local', [
+    *map(lambda layer: layer / 'usr/local', layers),
+  ]):
+    subprocess.run([
+      'tar',
+      '-C', '/usr/local',
+      '-c', '.',
+      '-f', paths.container_dir / 'qt.tar',
+    ], check = True)
 
 def main():
   config = parse_args()
@@ -83,27 +130,21 @@ def main():
   else:
     logging.basicConfig(level = logging.ERROR)
 
-  profile = get_full_profile(config)
-  paths = ProjectPaths(config, profile.ver, profile.info)
+  ver = resolve_profile(config)
+  paths = ProjectPaths(config, ver)
 
   if config.clean:
     clean(config, paths)
 
   prepare_dirs(paths)
 
-  download_and_patch(profile.ver, paths, profile.info)
+  download_and_patch(ver, paths)
 
-  os.environ['PATH'] = f'{paths.h_prefix}/bin:{os.environ['PATH']}'
+  build_host_lib(ver, paths, config)
 
-  os.environ['PKG_CONFIG_LIBDIR'] = f'{paths.h_prefix}/lib/pkgconfig:{paths.h_prefix}/share/pkgconfig'
-  build_host_lib(profile.ver, paths, profile.info, config)
-  del os.environ['PKG_CONFIG_LIBDIR']
+  build_cross_toolchain(ver, paths, config)
 
-  build_cross_toolchain(profile.ver, paths, profile.info, config)
-
-  os.environ['PKG_CONFIG_LIBDIR'] = f'{paths.prefix}/lib/pkgconfig:{paths.prefix}/share/pkgconfig'
-  build_target_lib(profile.ver, paths, profile.info, config)
-  del os.environ['PKG_CONFIG_LIBDIR']
+  build_target_lib(ver, paths, config)
 
   package(paths)
 

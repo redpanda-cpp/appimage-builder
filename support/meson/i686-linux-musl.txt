@@ -3,7 +3,7 @@ c = 'i686-linux-musl-gcc'
 cpp = 'i686-linux-musl-g++'
 ar = 'i686-linux-musl-ar'
 strip = 'i686-linux-musl-strip'
-pkg-config = 'pkg-config'
+pkg-config = 'i686-linux-musl-pkg-config'
 cmake = 'cmake'
 
 [host_machine]
