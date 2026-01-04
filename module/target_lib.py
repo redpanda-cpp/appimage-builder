@@ -578,7 +578,7 @@ def _qtbase(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace)
       '-device-option', f'CROSS_COMPILE={ver.target}-',
       '-qt-host-path', '/usr/local',
       '-no-pch',
-      '-no-ltcg',
+      '-ltcg',
       '-no-unity-build',
       # build environment
       '-pkg-config',
