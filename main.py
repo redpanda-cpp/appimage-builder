@@ -10,7 +10,7 @@ from subprocess import PIPE
 from typing import Dict, List
 
 from module.path import ProjectPaths
-from module.prepare_source import download_and_patch
+from module.prepare_source import prepare_source
 from module.profile import resolve_profile
 from module.util import ensure, overlayfs_ro
 
@@ -58,6 +58,11 @@ def parse_args() -> argparse.Namespace:
     '-j', '--jobs',
     type = int,
     default = os.cpu_count(),
+  )
+  parser.add_argument(
+    '--download-only',
+    action = 'store_true',
+    help = 'Download sources only',
   )
   parser.add_argument(
     '-v', '--verbose',
@@ -138,7 +143,10 @@ def main():
 
   prepare_dirs(paths)
 
-  download_and_patch(ver, paths)
+  prepare_source(ver, paths, config.download_only)
+
+  if config.download_only:
+    return
 
   build_host_lib(ver, paths, config)
 
