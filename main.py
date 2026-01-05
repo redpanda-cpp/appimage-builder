@@ -11,7 +11,7 @@ from typing import Dict, List
 
 from module.path import ProjectPaths
 from module.prepare_source import prepare_source
-from module.profile import resolve_profile
+from module.profile import BRANCHES, PROFILES, resolve_profile
 from module.util import ensure, overlayfs_ro
 
 from module.host_lib import build_host_lib
@@ -27,16 +27,13 @@ def parse_args() -> argparse.Namespace:
   parser.add_argument(
     '-a', '--arch', '--architecture',
     type = str,
-    choices = [
-      'x86_64', 'aarch64', 'riscv64', 'loong64',
-      'i686',
-    ],
+    choices = PROFILES.keys(),
     required = True,
   )
   parser.add_argument(
     '-b', '--branch',
     type = str,
-    choices = ['main', 'time32'],
+    choices = BRANCHES.keys(),
     default = 'main',
     help = 'Qt branch to build',
   )

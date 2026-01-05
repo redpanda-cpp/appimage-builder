@@ -50,6 +50,10 @@ def _gcc(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
   build_dir = paths.src_dir.gcc / 'build-x'
   ensure(build_dir)
 
+  config_flags = []
+  if ver.with_arch:
+    config_flags.append(f'--with-arch={ver.with_arch}')
+
   with overlayfs_ro('/usr/local', [
     paths.layer_host.gmp / 'usr/local',
     paths.layer_host.mpfr / 'usr/local',
@@ -83,6 +87,7 @@ def _gcc(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
       '--without-libintl',
       '--with-mpc=/usr/local',
       '--with-mpfr=/usr/local',
+      *config_flags,
       *cflags_host(),
       *cflags_target('_FOR_TARGET'),
     ])

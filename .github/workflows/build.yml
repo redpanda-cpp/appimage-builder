@@ -28,6 +28,7 @@ jobs:
       matrix:
         arch:
           - x86_64
+          - x86_64.v3
           - aarch64
           - riscv64
           - loong64

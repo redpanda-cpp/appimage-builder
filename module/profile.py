@@ -1,4 +1,5 @@
 import argparse
+from typing import Optional
 
 class BranchVersions:
   musl: str
@@ -55,21 +56,25 @@ class ProfileInfo:
   arch: str
   kernel_arch: str
   target: str
+  with_arch: Optional[str]
 
   def __init__(
     self,
     arch: str,
     triplet_arch: str,
     kernel_arch: str,
+    with_arch: Optional[str] = None,
   ):
     self.arch = arch
     self.kernel_arch = kernel_arch
     self.target = f'{triplet_arch}-linux-musl'
+    self.with_arch = with_arch
 
 class BranchProfile(BranchVersions):
   arch: str
   kernel_arch: str
   target: str
+  with_arch: Optional[str]
 
   def __init__(
     self,
@@ -81,6 +86,7 @@ class BranchProfile(BranchVersions):
     self.arch = info.arch
     self.kernel_arch = info.kernel_arch
     self.target = info.target
+    self.with_arch = info.with_arch
 
 BRANCHES = {
   'main': BranchVersions(
@@ -98,6 +104,12 @@ PROFILES = {
     arch = 'x86_64',
     triplet_arch = 'x86_64',
     kernel_arch = 'x86',
+  ),
+  'x86_64.v3': ProfileInfo(
+    arch = 'x86_64.v3',
+    triplet_arch = 'x86_64',
+    kernel_arch = 'x86',
+    with_arch = 'x86-64-v3',
   ),
   'aarch64': ProfileInfo(
     arch = 'aarch64',
@@ -118,11 +130,6 @@ PROFILES = {
     arch = 'i686',
     triplet_arch = 'i686',
     kernel_arch = 'x86',
-  ),
-  'armv7l': ProfileInfo(
-    arch = 'armv7l',
-    triplet_arch = 'armv7l',
-    kernel_arch = 'arm',
   ),
 }
 
