@@ -560,10 +560,6 @@ def _qtbase(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace)
   build_dir = paths.src_dir.qtbase / 'build-target'
   ensure(build_dir)
 
-  linker_arg = 'gold'
-  if info.arch in ('riscv64', 'loong64'):
-    linker_arg = 'bfd'
-
   with overlayfs_ro('/usr/local', [
     *toolchain_layers(paths),
     *qt_dependent_layers(paths),
@@ -583,7 +579,6 @@ def _qtbase(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace)
       '-qt-host-path', '/usr/local',
       '-no-pch',
       '-no-ltcg',
-      '-linker', linker_arg,
       '-no-unity-build',
       # build environment
       '-pkg-config',

@@ -142,7 +142,6 @@ def _qtbase(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace)
       '-platform', 'linux-g++',
       '-no-pch',
       '-no-ltcg',
-      '-linker', 'gold',
       '-no-unity-build',
       # build environment
       '-no-pkg-config',

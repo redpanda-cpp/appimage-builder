@@ -25,10 +25,6 @@ def _linux_headers(ver: BranchProfile, paths: ProjectPaths, config: argparse.Nam
   ], jobs = 1)
 
 def _binutils(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
-  gold_arg = '--enable-gold'
-  if info.arch in ('riscv64', 'loong64'):
-    gold_arg = '--disable-gold'
-
   build_dir = paths.src_dir.binutils / 'build-x'
   ensure(build_dir)
 
@@ -39,7 +35,6 @@ def _binutils(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespac
     '--disable-shared',
     '--enable-static',
     # features
-    gold_arg,
     '--disable-install-libbfd',
     '--disable-multilib',
     '--disable-nls',
