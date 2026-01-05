@@ -14,6 +14,7 @@ class BranchVersions:
   gmp: str = '6.3.0'
   harfbuzz: str = '10.1.0'
   linux_headers: str = '4.19.88-2'
+  mimalloc: str = '3.0.11'
   mpc: str = '1.3.1'
   mpfr: str = '4.2.1'
   musl: str = '1.2.5'

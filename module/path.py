@@ -18,6 +18,7 @@ class SourcePaths(NamedTuple):
   gmp: Path
   harfbuzz: Path
   linux_headers: Path
+  mimalloc: Path
   mpc: Path
   mpfr: Path
   musl: Path
@@ -68,6 +69,7 @@ class LayerPathsX(NamedTuple):
   cmake: Path
   gcc: Path
   linux: Path
+  mimalloc: Path
   musl: Path
   pkgconf: Path
 
@@ -162,6 +164,7 @@ class ProjectPaths:
       gmp = self.build_dir / f'gmp-{ver.gmp}',
       harfbuzz = self.build_dir / f'harfbuzz-{ver.harfbuzz}',
       linux_headers = self.build_dir / f'linux-headers-{ver.linux_headers}',
+      mimalloc = self.build_dir / f'mimalloc-{ver.mimalloc}',
       mpc = self.build_dir / f'mpc-{ver.mpc}',
       mpfr = self.build_dir / f'mpfr-{ver.mpfr}',
       musl = self.build_dir / f'musl-{ver.musl}',
@@ -206,6 +209,7 @@ class ProjectPaths:
       gmp = self.assets_dir / f'gmp-{ver.gmp}.tar.zst',
       harfbuzz = self.assets_dir / f'harfbuzz-{ver.harfbuzz}.tar.xz',
       linux_headers = self.assets_dir / f'linux-headers-{ver.linux_headers}.tar.xz',
+      mimalloc = self.assets_dir / f'mimalloc-{ver.mimalloc}.tar.gz',
       mpc = self.assets_dir / f'mpc-{ver.mpc}.tar.gz',
       mpfr = self.assets_dir / f'mpfr-{ver.mpfr}.tar.xz',
       musl = self.assets_dir / f'musl-{ver.musl}.tar.gz',
@@ -260,6 +264,7 @@ class ProjectPaths:
       cmake = layer_x_prefix / 'cmake',
       gcc = layer_x_prefix / 'gcc',
       linux = layer_x_prefix / 'linux',
+      mimalloc = layer_x_prefix / 'mimalloc',
       musl = layer_x_prefix / 'musl',
       pkgconf = layer_x_prefix / 'pkgconf',
     )

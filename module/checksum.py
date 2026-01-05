@@ -36,6 +36,8 @@ CHECKSUMS = {
 
   'linux-headers-4.19.88-2.tar.xz': 'dc7abf734487553644258a3822cfd429d74656749e309f2b25f09f4282e05588',
 
+  'mimalloc-3.0.11.tar.gz': 'c2cadf7f0ff007f63be3b6cf99855abfc5aaff7f34bdd408b405d5f7b63f8561',
+
   'mpc-1.3.1.tar.gz': 'ab642492f5cf882b74aa0cb730cd410a81edcdbec895183ce930e706c1c759b8',
 
   'mpfr-4.2.1.tar.xz': '277807353a6726978996945af13e52829e3abd7a9a5b7fb2793894e18f1fcbb2',

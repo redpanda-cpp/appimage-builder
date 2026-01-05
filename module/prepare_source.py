@@ -201,6 +201,12 @@ def _linux_headers(ver: BranchProfile, paths: ProjectPaths):
   _check_and_extract(paths.src_dir.linux_headers, paths.src_arx.linux_headers)
   _patch_done(paths.src_dir.linux_headers)
 
+def _mimalloc(ver: BranchProfile, paths: ProjectPaths):
+  url = f'https://github.com/microsoft/mimalloc/archive/refs/tags/v{ver.mimalloc}.tar.gz'
+  _validate_and_download(paths.src_arx.mimalloc, url)
+  _check_and_extract(paths.src_dir.mimalloc, paths.src_arx.mimalloc)
+  _patch_done(paths.src_dir.mimalloc)
+
 def _mpc(ver: BranchProfile, paths: ProjectPaths):
   url = f'https://ftpmirror.gnu.org/mpc/{paths.src_arx.mpc.name}'
   _validate_and_download(paths.src_arx.mpc, url)
@@ -396,6 +402,7 @@ def download_and_patch(ver: BranchProfile, paths: ProjectPaths):
   _gmp(ver, paths)
   _harfbuzz(ver, paths)
   _linux_headers(ver, paths)
+  _mimalloc(ver, paths)
   _mpc(ver, paths)
   _mpfr(ver, paths)
   _musl(ver, paths)

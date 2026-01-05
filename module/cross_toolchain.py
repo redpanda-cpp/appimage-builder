@@ -9,7 +9,8 @@ from module.debug import shell_here
 from module.path import ProjectPaths
 from module.profile import BranchProfile
 from module.util import ensure, overlayfs_ro
-from module.util import cflags_host, cflags_target, configure, make_custom, make_default, make_destdir_install, overlayfs_ro
+from module.util import cflags_host, cflags_target, configure, make_custom, make_default, make_destdir_install
+from module.util import cmake_build, cmake_config, cmake_destdir_install
 from module.util import meson_build, meson_config, meson_destdir_install
 
 def _cmake(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
@@ -144,6 +145,31 @@ def _musl(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
     make_destdir_install(build_dir, paths.layer_x.musl)
   yield
 
+def _mimalloc(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
+  build_dir = paths.src_dir.mimalloc / 'build-x'
+  ensure(build_dir)
+
+  with overlayfs_ro('/usr/local', [
+    paths.layer_x.binutils / 'usr/local',
+    paths.layer_x.gcc / 'usr/local',
+    paths.layer_x.linux / 'usr/local',
+    paths.layer_x.musl / 'usr/local',
+  ]):
+    cmake_config(paths.src_dir.mimalloc, build_dir, [
+      f'-DCMAKE_TOOLCHAIN_FILE={paths.cmake_cross_file}',
+      f'-DCMAKE_PREFIX_PATH=/usr/local/{ver.target}',
+      f'-DCMAKE_INSTALL_PREFIX=/usr/local/{ver.target}',
+      '-DMI_LIBC_MUSL=ON',
+      '-DMI_BUILD_SHARED=OFF',
+      '-DMI_BUILD_STATIC=ON',
+      '-DMI_BUILD_OBJECT=OFF',
+      '-DMI_BUILD_TESTS=OFF',
+      '-DMI_INSTALL_TOPLEVEL=ON',
+      '-DMI_NO_OPT_ARCH=ON',
+    ])
+    cmake_build(build_dir, config.jobs)
+    cmake_destdir_install(build_dir, paths.layer_x.mimalloc)
+
 def _pkgconf(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
   build_dir = paths.src_dir.pkgconf / 'build-x'
   ensure(build_dir)
@@ -181,5 +207,7 @@ def build_cross_toolchain(ver: BranchProfile, paths: ProjectPaths, config: argpa
   musl.__next__()
 
   gcc.__next__()
+
+  _mimalloc(ver, paths, config)
 
   _pkgconf(ver, paths, config)

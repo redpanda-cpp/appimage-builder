@@ -218,6 +218,7 @@ def toolchain_layers(paths: ProjectPaths):
     paths.layer_x.binutils / 'usr/local',
     paths.layer_x.gcc / 'usr/local',
     paths.layer_x.linux / 'usr/local',
+    paths.layer_x.mimalloc / 'usr/local',
     paths.layer_x.musl / 'usr/local',
     paths.layer_x.pkgconf / 'usr/local',
   ]

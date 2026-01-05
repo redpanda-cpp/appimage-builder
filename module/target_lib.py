@@ -766,6 +766,7 @@ def _appimage_runtime(ver: BranchProfile, paths: ProjectPaths, config: argparse.
       '-lsquashfuse_ll',
       '-lzstd',
       '-lfuse3',
+      '-lmimalloc',
       '-o', build_dir / 'appimage-runtime',
     ], check = True)
 
