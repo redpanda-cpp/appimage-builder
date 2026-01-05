@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 from packaging.version import Version
+from pathlib import Path
 from shutil import copyfile
 import subprocess
 
@@ -707,6 +708,7 @@ def _fcitx_qt(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespac
     cmake_config(paths.src_dir.fcitx_qt, build_dir, [
       f'-DCMAKE_TOOLCHAIN_FILE={paths.cmake_cross_file}',
       f'-DCMAKE_PREFIX_PATH=/usr/local/{ver.target}',
+      f'-DCMAKE_INSTALL_PREFIX=/usr/local/{ver.target}',
       '-DENABLE_QT5=Off',
       '-DENABLE_QT6=On',
       '-DBUILD_ONLY_PLUGIN=On',
@@ -720,13 +722,27 @@ def _fcitx_qt(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespac
     ensure(ime_dir)
     copyfile(build_dir / 'qt6/platforminputcontext/libfcitx5platforminputcontextplugin.a', ime_dir / 'libfcitx5platforminputcontextplugin.a')
 
-    # and generate missing plugin mkspec file
-    mkspec_dir = paths.layer_target.fcitx_qt / f'usr/local/{ver.target}/mkspecs/modules'
-    ensure(mkspec_dir)
-    ibus_mkspec = open(f'/usr/local/{ver.target}/mkspecs/modules/qt_plugin_ibusplatforminputcontextplugin.pri', 'r').read()
-    fcitx_mkspec = ibus_mkspec.replace('ibus', 'fcitx5').replace('Ibus', 'Fcitx5')
-    with open(mkspec_dir / 'qt_plugin_fcitx5platforminputcontextplugin.pri', 'w') as f:
-      f.write(fcitx_mkspec)
+    # and generate missing cmake files
+    cmake_dir = f'usr/local/{ver.target}/lib/cmake/Qt6Gui'
+    ibus_cmake_dir = Path('/') / cmake_dir
+    fcitx_cmake_dir = paths.layer_target.fcitx_qt / cmake_dir
+    ensure(fcitx_cmake_dir)
+
+    for ibus_file in ibus_cmake_dir.glob('Qt6QIbusPlatformInputContextPlugin*.cmake'):
+      ibus_content = open(ibus_file, 'r').read()
+      fcitx_file = fcitx_cmake_dir / ibus_file.name.replace('Ibus', 'Fcitx5')
+      with open(fcitx_file, 'w') as f:
+        f.write(ibus_content.replace('ibus', 'fcitx5').replace('Ibus', 'Fcitx5'))
+
+    import_object = paths.layer_target.fcitx_qt / f'usr/local/{ver.target}/plugins/platforminputcontexts/objects-Release/QFcitx5PlatformInputContextPlugin_init/QFcitx5PlatformInputContextPlugin_init.cpp.o'
+    ensure(import_object.parent)
+    subprocess.run([
+      f'{ver.target}-g++',
+      '-std=c++17', '-O3',
+      '-I', f'/usr/local/{ver.target}/include/QtCore',
+      '-c', paths.root_dir / 'support/fcitx/import.cc',
+      '-o', import_object,
+    ], check = True)
 
 def _appimage_runtime(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
   build_dir = paths.src_dir.appimage_runtime / 'build-target'

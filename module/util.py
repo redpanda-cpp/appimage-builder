@@ -130,7 +130,7 @@ def meson_config(
       'setup',
       '--default-library', 'static',
       '--prefer-static',
-      '--buildtype', 'minsize',
+      '--buildtype', 'release',
       '--strip',
       *extra_args,
       build_dir

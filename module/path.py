@@ -65,6 +65,7 @@ class LayerPathsX(NamedTuple):
   prefix: Path
 
   binutils: Path
+  cmake: Path
   gcc: Path
   linux: Path
   musl: Path
@@ -256,6 +257,7 @@ class ProjectPaths:
       prefix = layer_x_prefix,
 
       binutils = layer_x_prefix / 'binutils',
+      cmake = layer_x_prefix / 'cmake',
       gcc = layer_x_prefix / 'gcc',
       linux = layer_x_prefix / 'linux',
       musl = layer_x_prefix / 'musl',

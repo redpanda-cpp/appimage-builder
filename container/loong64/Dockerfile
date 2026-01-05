@@ -4,7 +4,8 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     apt update && \
     apt install --no-install-recommends -y \
         # Red Panda C++
-        git make \
+        cmake git make qemu-user \
+        fonts-noto fonts-noto-cjk fonts-noto-color-emoji \
         # appimage tools
         squashfs-tools && \
     apt clean && \
@@ -13,5 +14,9 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
 ADD qt.tar /usr/local
 
 ENV ARCH=loong64
-ENV QMAKE=/usr/local/loongarch64-linux-musl/bin/qmake
+ENV DEB_ARCH=loong64
 ENV APPIMAGE_RUNTIME=/usr/local/loongarch64-linux-musl/bin/appimage-runtime
+
+ENV CMAKE_TOOLCHAIN_FILE=/usr/local/lib/cmake/loongarch64-linux-musl.cmake
+ENV CMAKE_PREFIX_PATH=/usr/local/loongarch64-linux-musl
+ENV CMAKE_CROSSCOMPILING_EMULATOR=qemu-loongarch64

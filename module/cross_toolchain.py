@@ -2,7 +2,7 @@ import argparse
 import logging
 import os
 from packaging.version import Version
-from shutil import copyfile
+import shutil
 import subprocess
 
 from module.debug import shell_here
@@ -11,6 +11,11 @@ from module.profile import BranchProfile
 from module.util import ensure, overlayfs_ro
 from module.util import cflags_host, cflags_target, configure, make_custom, make_default, make_destdir_install, overlayfs_ro
 from module.util import meson_build, meson_config, meson_destdir_install
+
+def _cmake(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
+  cmake_cross_file = paths.layer_x.cmake / f'usr/local/lib/cmake/{ver.target}.cmake'
+  ensure(cmake_cross_file.parent)
+  shutil.copy(paths.cmake_cross_file, cmake_cross_file)
 
 def _linux_headers(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
   make_custom(paths.src_dir.linux_headers, [
@@ -164,6 +169,7 @@ def _pkgconf(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace
   os.symlink(f'../{ver.target}/bin/pkgconf', bin_dir / f'{ver.target}-pkg-config')
 
 def build_cross_toolchain(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
+  _cmake(ver, paths, config)
 
   _linux_headers(ver, paths, config)
 

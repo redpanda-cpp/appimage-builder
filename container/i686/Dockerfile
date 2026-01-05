@@ -4,7 +4,8 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     apt update && \
     apt install --no-install-recommends -y \
         # Red Panda C++
-        git make \
+        cmake git make \
+        fonts-noto fonts-noto-cjk fonts-noto-color-emoji \
         # appimage tools
         squashfs-tools && \
     apt clean && \
@@ -13,5 +14,8 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
 ADD qt.tar /usr/local
 
 ENV ARCH=i686
-ENV QMAKE=/usr/local/i686-linux-musl/bin/qmake
+ENV DEB_ARCH=i386
 ENV APPIMAGE_RUNTIME=/usr/local/i686-linux-musl/bin/appimage-runtime
+
+ENV CMAKE_TOOLCHAIN_FILE=/usr/local/lib/cmake/i686-linux-musl.cmake
+ENV CMAKE_PREFIX_PATH=/usr/local/i686-linux-musl
