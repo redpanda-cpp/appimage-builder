@@ -9,7 +9,7 @@ import subprocess
 from module.debug import shell_here
 from module.path import ProjectPaths
 from module.profile import BranchProfile
-from module.util import ensure, merge_libs, overlayfs_ro, toolchain_layers, qt_dependent_layers
+from module.util import ensure, merge_libs, overlayfs_ro, pkgconf_remove_flags, toolchain_layers, qt_dependent_layers
 from module.util import cflags_target, configure, make_default, make_destdir_install
 from module.util import cmake_build, cmake_config, cmake_destdir_install, qt_configure_module
 from module.util import meson_build, meson_config, meson_destdir_install
@@ -137,14 +137,22 @@ def _z(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
     make_destdir_install(build_dir, paths.layer_target.z)
 
 def _zstd(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
+  v_musl = Version(ver.musl)
+
   src_dir = paths.src_dir.zstd / 'build/meson'
   build_dir = paths.src_dir.zstd / 'build-target'
+  ensure(build_dir)
+
+  config_flags = []
+  if v_musl < Version('1.2.3'):
+    config_flags.append('-Dc_args=-DZSTD_USE_C90_QSORT')
 
   with overlayfs_ro('/usr/local', toolchain_layers(paths)):
     meson_config(src_dir, build_dir, [
       '--cross-file', paths.meson_cross_file,
       '--prefix', f'/usr/local/{ver.target}',
       '-Dbin_programs=false',
+      *config_flags,
     ])
     meson_build(build_dir, config.jobs)
     meson_destdir_install(build_dir, paths.layer_target.zstd)
@@ -157,15 +165,18 @@ def _dbus(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
     *toolchain_layers(paths),
     paths.layer_target.expat / 'usr/local',
   ]):
-    configure(build_dir, [
-      f'--prefix=/usr/local/{ver.target}',
-      f'--host={ver.target}',
-      '--disable-shared',
-      '--enable-static',
-      *cflags_target(),
-    ])
-    make_default(build_dir, config.jobs)
-    make_destdir_install(build_dir, paths.layer_target.dbus)
+    meson_config(paths.src_dir.dbus, build_dir, [
+      '--cross-file', paths.meson_cross_file,
+      '--prefix', f'/usr/local/{ver.target}',
+      '-Dmessage_bus=false',
+      '-Dmodular_tests=disabled',
+      '-Dtools=false',
+     ])
+    meson_build(build_dir, config.jobs)
+    meson_destdir_install(build_dir, paths.layer_target.dbus)
+
+    pkgconf = paths.layer_target.dbus / f'usr/local/{ver.target}/lib/pkgconfig/dbus-1.pc'
+    pkgconf_remove_flags(pkgconf, 'Cflags', ['-pthread'])
 
 def _png(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
   build_dir = paths.src_dir.png / 'build-target'
@@ -444,6 +455,8 @@ def _xkbcommon(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespa
       '--default-library', 'static',
       '--prefer-static',
       '-Dxkb-config-root=/usr/share/X11/xkb',
+      '-Dxkb-config-versioned-extensions-path=/usr/share/xkeyboard-config-2.d',
+      '-Dxkb-config-unversioned-extensions-path=/usr/share/xkeyboard-config.d',
       '-Dxkb-config-extra-path=/etc/xkb',
       '-Dx-locale-root=/usr/share/X11/locale',
       '-Denable-wayland=false',
@@ -516,6 +529,8 @@ def _fontconfig(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namesp
     meson_config(paths.src_dir.fontconfig, build_dir, [
       '--cross-file', paths.meson_cross_file,
       '--prefix', f'/usr/local/{ver.target}',
+      '-Dtests=disabled',
+      '-Dtools=disabled',
       '-Dcache-dir=/var/cache/fontconfig',
       '-Dtemplate-dir=/usr/share/fontconfig/conf.avail',
       '-Dbaseconfig-dir=/etc/fonts',
@@ -527,7 +542,7 @@ def _fontconfig(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namesp
       ver.target,
       paths.layer_target.fontconfig / f'usr/local/{ver.target}/lib/libfontconfig.a',
       [
-        build_dir / 'src/libfontconfig.a',
+        build_dir / 'libfontconfig.a',
         paths.layer_target.expat / f'usr/local/{ver.target}/lib/libexpat.a',
         paths.layer_target.freetype / f'usr/local/{ver.target}/lib/libfreetype.a',
       ],

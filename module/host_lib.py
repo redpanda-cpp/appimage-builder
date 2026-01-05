@@ -8,10 +8,17 @@ import subprocess
 from module.debug import shell_here
 from module.path import ProjectPaths
 from module.profile import BranchProfile
-from module.util import ensure, overlayfs_ro
+from module.util import cmake_config, ensure, overlayfs_ro, pkgconf_remove_flags
 from module.util import cflags_host, configure, make_default, make_destdir_install
 from module.util import cmake_build, cmake_destdir_install, qt_configure_module
 from module.util import meson_build, meson_config, meson_destdir_install
+
+def _meson(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
+  subprocess.run([
+    'pip3', 'install',
+    '--root', paths.layer_host.meson,
+    f'meson=={ver.meson}',
+  ], check = True)
 
 def _gmp(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
   build_dir = paths.src_dir.gmp / 'build-host'
@@ -93,15 +100,20 @@ def _dbus(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
 
   with overlayfs_ro('/usr/local', [
     paths.layer_host.expat / 'usr/local',
+    paths.layer_host.meson / 'usr/local',
   ]):
-    configure(build_dir, [
-      '--prefix=/usr/local',
-      '--disable-shared',
-      '--enable-static',
-      *cflags_host(),
-    ])
-    make_default(build_dir, config.jobs)
-    make_destdir_install(build_dir, paths.layer_host.dbus)
+    meson_config(paths.src_dir.dbus, build_dir, [
+      '--prefix', '/usr/local',
+      '--libdir', '/usr/local/lib',
+      '-Dmessage_bus=false',
+      '-Dmodular_tests=disabled',
+      '-Dtools=false',
+     ])
+    meson_build(build_dir, config.jobs)
+    meson_destdir_install(build_dir, paths.layer_host.dbus)
+
+  pkgconf = paths.layer_host.dbus / 'usr/local/lib/pkgconfig/dbus-1.pc'
+  pkgconf_remove_flags(pkgconf, 'Cflags', ['-pthread'])
 
 def _wayland(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
   build_dir = paths.src_dir.wayland / 'build-host'
@@ -110,6 +122,7 @@ def _wayland(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace
   with overlayfs_ro('/usr/local', [
     paths.layer_host.expat / 'usr/local',
     paths.layer_host.ffi / 'usr/local',
+    paths.layer_host.meson / 'usr/local',
   ]):
     meson_config(paths.src_dir.wayland, build_dir, [
       '--prefix', '/usr/local',
@@ -214,6 +227,9 @@ def _qtwayland(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespa
 
 def build_host_lib(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
   os.environ['PKG_CONFIG_PATH'] = '/usr/local/lib/pkgconfig'
+
+  # host meson
+  _meson(ver, paths, config)
 
   # toolchain
   _gmp(ver, paths, config)

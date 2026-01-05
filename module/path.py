@@ -17,7 +17,7 @@ class SourcePaths(NamedTuple):
   gcc: Path
   gmp: Path
   harfbuzz: Path
-  linux_headers: Path
+  linux: Path
   mimalloc: Path
   mpc: Path
   mpfr: Path
@@ -55,6 +55,7 @@ class LayerPathsHost(NamedTuple):
   expat: Path
   ffi: Path
   gmp: Path
+  meson: Path
   mpc: Path
   mpfr: Path
   qtbase: Path
@@ -163,7 +164,7 @@ class ProjectPaths:
       gcc = self.build_dir / f'gcc-{ver.gcc}',
       gmp = self.build_dir / f'gmp-{ver.gmp}',
       harfbuzz = self.build_dir / f'harfbuzz-{ver.harfbuzz}',
-      linux_headers = self.build_dir / f'linux-headers-{ver.linux_headers}',
+      linux = self.build_dir / f'linux-{ver.linux}',
       mimalloc = self.build_dir / f'mimalloc-{ver.mimalloc}',
       mpc = self.build_dir / f'mpc-{ver.mpc}',
       mpfr = self.build_dir / f'mpfr-{ver.mpfr}',
@@ -187,7 +188,7 @@ class ProjectPaths:
       xcb_util_keysyms = self.build_dir / f'xcb-util-keysyms-{ver.xcb_util_keysyms}',
       xcb_util_renderutil = self.build_dir / f'xcb-util-renderutil-{ver.xcb_util_renderutil}',
       xcb_util_wm = self.build_dir / f'xcb-util-wm-{ver.xcb_util_wm}',
-      xkbcommon = self.build_dir / f'libxkbcommon-{ver.xkbcommon}',
+      xkbcommon = self.build_dir / f'libxkbcommon-xkbcommon-{ver.xkbcommon}',
       xml = self.build_dir / f'libxml2-{ver.xml}',
       xorg_proto = self.build_dir / f'xorgproto-{ver.xorg_proto}',
       xtrans = self.build_dir / f'xtrans-{ver.xtrans}',
@@ -202,13 +203,13 @@ class ProjectPaths:
       expat = self.assets_dir / f'expat-{ver.expat}.tar.xz',
       fcitx_qt = self.assets_dir / f'fcitx5-qt-{ver.fcitx_qt}.tar.gz',
       ffi = self.assets_dir / f'libffi-{ver.ffi}.tar.gz',
-      fontconfig = self.assets_dir / f'fontconfig-{ver.fontconfig}.tar.gz',
+      fontconfig = self.assets_dir / f'fontconfig-{ver.fontconfig}.tar.xz',
       freetype = self.assets_dir / f'freetype-{ver.freetype}.tar.xz',
       fuse = self.assets_dir / f'fuse-{ver.fuse}.tar.gz',
       gcc = self.assets_dir / f'gcc-{ver.gcc}.tar.xz',
       gmp = self.assets_dir / f'gmp-{ver.gmp}.tar.zst',
       harfbuzz = self.assets_dir / f'harfbuzz-{ver.harfbuzz}.tar.xz',
-      linux_headers = self.assets_dir / f'linux-headers-{ver.linux_headers}.tar.xz',
+      linux = self.assets_dir / f'linux-{ver.linux}.tar.xz',
       mimalloc = self.assets_dir / f'mimalloc-{ver.mimalloc}.tar.gz',
       mpc = self.assets_dir / f'mpc-{ver.mpc}.tar.gz',
       mpfr = self.assets_dir / f'mpfr-{ver.mpfr}.tar.xz',
@@ -232,7 +233,7 @@ class ProjectPaths:
       xcb_util_keysyms = self.assets_dir / f'xcb-util-keysyms-{ver.xcb_util_keysyms}.tar.xz',
       xcb_util_renderutil = self.assets_dir / f'xcb-util-renderutil-{ver.xcb_util_renderutil}.tar.xz',
       xcb_util_wm = self.assets_dir / f'xcb-util-wm-{ver.xcb_util_wm}.tar.xz',
-      xkbcommon = self.assets_dir / f'libxkbcommon-{ver.xkbcommon}.tar.xz',
+      xkbcommon = self.assets_dir / f'libxkbcommon-xkbcommon-{ver.xkbcommon}.tar.gz',
       xml = self.assets_dir / f'libxml2-{ver.xml}.tar.xz',
       xorg_proto = self.assets_dir / f'xorgproto-{ver.xorg_proto}.tar.xz',
       xtrans = self.assets_dir / f'xtrans-{ver.xtrans}.tar.xz',
@@ -248,6 +249,7 @@ class ProjectPaths:
       expat = layer_host_prefix / 'expat',
       ffi = layer_host_prefix / 'libffi',
       gmp = layer_host_prefix / 'gmp',
+      meson = layer_host_prefix / 'meson',
       mpc = layer_host_prefix / 'mpc',
       mpfr = layer_host_prefix / 'mpfr',
       qtbase = layer_host_prefix / 'qtbase',

@@ -121,9 +121,8 @@ def _patch_done(path: Path):
 def _appimage_runtime(ver: BranchProfile, paths: ProjectPaths):
   url = f'https://github.com/AppImage/type2-runtime/archive/{ver.appimage_runtime}.tar.gz'
   _validate_and_download(paths.src_arx.appimage_runtime, url)
-  if _check_and_extract(paths.src_dir.appimage_runtime, paths.src_arx.appimage_runtime):
-    _patch(paths.src_dir.appimage_runtime, paths.patch_dir / 'appimage-runtime-trunk-squashfs.patch')
-    _patch_done(paths.src_dir.appimage_runtime)
+  _check_and_extract(paths.src_dir.appimage_runtime, paths.src_arx.appimage_runtime)
+  _patch_done(paths.src_dir.appimage_runtime)
 
 def _binutils(ver: BranchProfile, paths: ProjectPaths):
   url = f'https://ftpmirror.gnu.org/gnu/binutils/{paths.src_arx.binutils.name}'
@@ -157,7 +156,7 @@ def _ffi(ver: BranchProfile, paths: ProjectPaths):
   _patch_done(paths.src_dir.ffi)
 
 def _fontconfig(ver: BranchProfile, paths: ProjectPaths):
-  url = f'https://www.freedesktop.org/software/fontconfig/release/{paths.src_arx.fontconfig.name}'
+  url = f'https://gitlab.freedesktop.org/api/v4/projects/890/packages/generic/fontconfig/{ver.fontconfig}/{paths.src_arx.fontconfig.name}'
   _validate_and_download(paths.src_arx.fontconfig, url)
   _check_and_extract(paths.src_dir.fontconfig, paths.src_arx.fontconfig)
   _patch_done(paths.src_dir.fontconfig)
@@ -195,11 +194,12 @@ def _harfbuzz(ver: BranchProfile, paths: ProjectPaths):
   _check_and_extract(paths.src_dir.harfbuzz, paths.src_arx.harfbuzz)
   _patch_done(paths.src_dir.harfbuzz)
 
-def _linux_headers(ver: BranchProfile, paths: ProjectPaths):
-  url = f'https://github.com/sabotage-linux/kernel-headers/releases/download/v{ver.linux_headers}/{paths.src_arx.linux_headers.name}'
-  _validate_and_download(paths.src_arx.linux_headers, url)
-  _check_and_extract(paths.src_dir.linux_headers, paths.src_arx.linux_headers)
-  _patch_done(paths.src_dir.linux_headers)
+def _linux(ver: BranchProfile, paths: ProjectPaths):
+  v = Version(ver.linux)
+  url = f'https://cdn.kernel.org/pub/linux/kernel/v{v.major}.x/linux-{ver.linux}.tar.xz'
+  _validate_and_download(paths.src_arx.linux, url)
+  _check_and_extract(paths.src_dir.linux, paths.src_arx.linux)
+  _patch_done(paths.src_dir.linux)
 
 def _mimalloc(ver: BranchProfile, paths: ProjectPaths):
   url = f'https://github.com/microsoft/mimalloc/archive/refs/tags/v{ver.mimalloc}.tar.gz'
@@ -222,8 +222,11 @@ def _mpfr(ver: BranchProfile, paths: ProjectPaths):
 def _musl(ver: BranchProfile, paths: ProjectPaths):
   url = f'https://www.musl-libc.org/releases/{paths.src_arx.musl.name}'
   _validate_and_download(paths.src_arx.musl, url)
-  _check_and_extract(paths.src_dir.musl, paths.src_arx.musl)
-  _patch_done(paths.src_dir.musl)
+  if _check_and_extract(paths.src_dir.musl, paths.src_arx.musl):
+    v = Version(ver.musl)
+    if v < Version('1.2'):
+      _patch(paths.src_dir.musl, paths.patch_dir / 'musl-remove-non-proto-decl.patch')
+    _patch_done(paths.src_dir.musl)
 
 def _pkgconf(ver: BranchProfile, paths: ProjectPaths):
   url = f'https://github.com/pkgconf/pkgconf/archive/refs/tags/pkgconf-{ver.pkgconf}.tar.gz'
@@ -242,8 +245,10 @@ def _qtbase(ver: BranchProfile, paths: ProjectPaths):
   branch = f'{v.major}.{v.minor}'
   url = f'https://download.qt.io/archive/qt/{branch}/{ver.qt}/submodules/{paths.src_arx.qtbase.name}'
   _validate_and_download(paths.src_arx.qtbase, url)
-  _check_and_extract(paths.src_dir.qtbase, paths.src_arx.qtbase)
-  _patch_done(paths.src_dir.qtbase)
+  if _check_and_extract(paths.src_dir.qtbase, paths.src_arx.qtbase):
+    if v >= Version('6.9.0'):
+      _patch(paths.src_dir.qtbase, paths.patch_dir / 'qtbase-define-loong-hwcap-flags.patch')
+    _patch_done(paths.src_dir.qtbase)
 
 def _qtsvg(ver: BranchProfile, paths: ProjectPaths):
   v = Version(ver.qt)
@@ -278,7 +283,7 @@ def _qtwayland(ver: BranchProfile, paths: ProjectPaths):
   _patch_done(paths.src_dir.qtwayland)
 
 def _squashfuse(ver: BranchProfile, paths: ProjectPaths):
-  url = f'https://github.com/vasi/squashfuse/archive/{ver.squashfuse}.tar.gz'
+  url = f'https://github.com/vasi/squashfuse/releases/download/{ver.squashfuse}/{paths.src_arx.squashfuse.name}'
   _validate_and_download(paths.src_arx.squashfuse, url)
   if _check_and_extract(paths.src_dir.squashfuse, paths.src_arx.squashfuse):
     _autoreconf(paths.src_dir.squashfuse)
@@ -351,7 +356,7 @@ def _xcb_util_wm(ver: BranchProfile, paths: ProjectPaths):
   _patch_done(paths.src_dir.xcb_util_wm)
 
 def _xkbcommon(ver: BranchProfile, paths: ProjectPaths):
-  url = f'https://xkbcommon.org/download/{paths.src_arx.xkbcommon.name}'
+  url = f'https://github.com/xkbcommon/libxkbcommon/archive/refs/tags/xkbcommon-{ver.xkbcommon}.tar.gz'
   _validate_and_download(paths.src_arx.xkbcommon, url)
   _check_and_extract(paths.src_dir.xkbcommon, paths.src_arx.xkbcommon)
   _patch_done(paths.src_dir.xkbcommon)
@@ -385,8 +390,9 @@ def _z(ver: BranchProfile, paths: ProjectPaths):
 def _zstd(ver: BranchProfile, paths: ProjectPaths):
   url = f'https://github.com/facebook/zstd/releases/download/v{ver.zstd}/{paths.src_arx.zstd.name}'
   _validate_and_download(paths.src_arx.zstd, url)
-  _check_and_extract(paths.src_dir.zstd, paths.src_arx.zstd)
-  _patch_done(paths.src_dir.zstd)
+  if _check_and_extract(paths.src_dir.zstd, paths.src_arx.zstd):
+    _patch(paths.src_dir.zstd, paths.patch_dir / 'zstd-add-switch-for-qsort.patch')
+    _patch_done(paths.src_dir.zstd)
 
 def download_and_patch(ver: BranchProfile, paths: ProjectPaths):
   _appimage_runtime(ver, paths)
@@ -401,7 +407,7 @@ def download_and_patch(ver: BranchProfile, paths: ProjectPaths):
   _gcc(ver, paths)
   _gmp(ver, paths)
   _harfbuzz(ver, paths)
-  _linux_headers(ver, paths)
+  _linux(ver, paths)
   _mimalloc(ver, paths)
   _mpc(ver, paths)
   _mpfr(ver, paths)

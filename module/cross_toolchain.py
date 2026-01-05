@@ -19,11 +19,13 @@ def _cmake(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
   shutil.copy(paths.cmake_cross_file, cmake_cross_file)
 
 def _linux_headers(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
-  make_custom(paths.src_dir.linux_headers, [
+  prefix = paths.layer_x.linux / f'usr/local/{ver.target}'
+
+  make_custom(paths.src_dir.linux, [
+    'headers_install',
     f'ARCH={ver.kernel_arch}',
-    f'prefix={paths.layer_x.linux}/usr/local/{ver.target}',
-    'install',
-  ], jobs = 1)
+    f'INSTALL_HDR_PATH={prefix}',
+  ], config.jobs)
 
 def _binutils(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
   build_dir = paths.src_dir.binutils / 'build-x'
@@ -174,13 +176,16 @@ def _pkgconf(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace
   build_dir = paths.src_dir.pkgconf / 'build-x'
   ensure(build_dir)
 
-  meson_config(paths.src_dir.pkgconf, build_dir, [
-    '--prefix', f'/usr/local/{ver.target}',
-    '--libdir', f'/usr/local/{ver.target}/lib',
-    '-Dtests=disabled',
-  ])
-  meson_build(build_dir, config.jobs)
-  meson_destdir_install(build_dir, paths.layer_x.pkgconf)
+  with overlayfs_ro('/usr/local', [
+    paths.layer_host.meson / 'usr/local',
+  ]):
+    meson_config(paths.src_dir.pkgconf, build_dir, [
+      '--prefix', f'/usr/local/{ver.target}',
+      '--libdir', f'/usr/local/{ver.target}/lib',
+      '-Dtests=disabled',
+    ])
+    meson_build(build_dir, config.jobs)
+    meson_destdir_install(build_dir, paths.layer_x.pkgconf)
 
   bin_dir = paths.layer_x.pkgconf / f'usr/local/bin'
   alias = bin_dir / f'{ver.target}-pkg-config'

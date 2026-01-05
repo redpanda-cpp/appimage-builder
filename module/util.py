@@ -172,6 +172,18 @@ def overlayfs_ro(merged: Union[Path, str], lower: list[Path]):
   finally:
     subprocess.run(['umount', merged], check = False)
 
+def pkgconf_remove_flags(pc: Path, keyword: str, flags: List[str]):
+  lines = open(pc, 'r').readlines()
+  result = []
+  for line in lines:
+    if line.startswith(f'{keyword}:'):
+      values = line[len(keyword) + 1:].split()
+      values = [value for value in values if value not in flags]
+      line = f'{keyword}: {" ".join(values)}\n'
+    result.append(line)
+  with open(pc, 'w') as f:
+    f.writelines(result)
+
 def qt_configure_module(source_dir: Path, build_dir: Path, args: List[str], triplet: Optional[str] = None):
   qt_configure_module = 'qt-configure-module'
   if triplet:
@@ -215,6 +227,8 @@ def qt_dependent_layers(paths: ProjectPaths):
 
 def toolchain_layers(paths: ProjectPaths):
   return [
+    paths.layer_host.meson / 'usr/local',
+
     paths.layer_x.binutils / 'usr/local',
     paths.layer_x.gcc / 'usr/local',
     paths.layer_x.linux / 'usr/local',

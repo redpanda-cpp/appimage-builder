@@ -1,18 +1,32 @@
 diff --git a/lib/mount.c b/lib/mount.c
-index d71e6fc..051793b 100644
+index 7a856c1..f5015a5 100644
 --- a/lib/mount.c
 +++ b/lib/mount.c
-@@ -119,8 +119,11 @@ static const struct fuse_opt fuse_mount_opts[] = {
- 
- static void exec_fusermount(const char *argv[])
+@@ -130,19 +130,15 @@ static const struct fuse_opt fuse_mount_opts[] = {
+ static int fusermount_posix_spawn(posix_spawn_file_actions_t *action,
+ 				  char const * const argv[], pid_t *out_pid)
  {
--	execv(FUSERMOUNT_DIR "/" FUSERMOUNT_PROG, (char **) argv);
--	execvp(FUSERMOUNT_PROG, (char **) argv);
+-	const char *full_path = FUSERMOUNT_DIR "/" FUSERMOUNT_PROG;
+ 	pid_t pid;
+-
+-	/* See man 7 environ for the global environ pointer */
+-
+-	/* first try the install path */
+-	int status = posix_spawn(&pid, full_path,  action, NULL,
+-				 (char * const *) argv, environ);
+-	if (status != 0) {
+-		/* if that fails, try a system install */
+-		status = posix_spawnp(&pid, FUSERMOUNT_PROG, action, NULL,
+-				      (char * const *) argv, environ);
+-	}
++	int status = -1;
 +	const char *prog = getenv("FUSERMOUNT_PROG");
 +	if (prog)
-+		execvp(prog, (char **) argv);
-+	execvp("fusermount3", (char **) argv);
-+	execvp("fusermount", (char **) argv);
- }
++		status = posix_spawn(&pid, prog, action, NULL, (char **) argv, environ);
++	if (status != 0)
++		status = posix_spawn(&pid, "fusermount3", action, NULL, (char **) argv, environ);
++	if (status != 0)
++		status = posix_spawn(&pid, "fusermount", action, NULL, (char **) argv, environ);
  
- void fuse_mount_version(void)
+ 	if (status != 0) {
+ 		fuse_log(FUSE_LOG_ERR, "Failed to call '%s': %s\n",

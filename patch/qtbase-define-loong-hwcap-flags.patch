@@ -1,0 +1,19 @@
+diff --git a/src/corelib/global/qsimd.cpp b/src/corelib/global/qsimd.cpp
+index 3169d28e094..b40663786b7 100644
+--- a/src/corelib/global/qsimd.cpp
++++ b/src/corelib/global/qsimd.cpp
+@@ -206,6 +206,14 @@ static inline quint64 detectProcessorFeatures()
+ }
+ 
+ #elif defined(Q_PROCESSOR_LOONGARCH)
++
++#ifndef HWCAP_LOONGARCH_LSX
++#define HWCAP_LOONGARCH_LSX (1 << 4)
++#endif
++#ifndef HWCAP_LOONGARCH_LASX
++#define HWCAP_LOONGARCH_LASX (1 << 5)
++#endif
++
+ static inline quint64 detectProcessorFeatures()
+ {
+     quint64 features = 0;
