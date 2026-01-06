@@ -36,6 +36,7 @@ CHECKSUMS = {
 
   'linux-6.18.3.tar.xz': '7a8879167b89c4bae077d6f39c4f2130769f05dbdad2aad914adab9afb7d7f9a',
 
+  'mimalloc-2.2.4.tar.gz': '754a98de5e2912fddbeaf24830f982b4540992f1bab4a0a8796ee118e0752bda',
   'mimalloc-3.0.11.tar.gz': 'c2cadf7f0ff007f63be3b6cf99855abfc5aaff7f34bdd408b405d5f7b63f8561',
 
   'mpc-1.3.1.tar.gz': 'ab642492f5cf882b74aa0cb730cd410a81edcdbec895183ce930e706c1c759b8',

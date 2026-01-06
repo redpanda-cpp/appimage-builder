@@ -2,6 +2,7 @@ import argparse
 from typing import Optional
 
 class BranchVersions:
+  mimalloc: str
   musl: str
   qt: str
 
@@ -19,7 +20,6 @@ class BranchVersions:
   harfbuzz: str = '12.3.0'
   linux: str = '6.18.3'
   meson: str = '1.10.0'
-  mimalloc: str = '3.0.11'
   mpc: str = '1.3.1'
   mpfr: str = '4.2.2'
   pkgconf: str = '2.5.1'
@@ -46,9 +46,11 @@ class BranchVersions:
   def __init__(
     self,
 
+    mimalloc: str,
     musl: str,
     qt: str,
   ):
+    self.mimalloc = mimalloc
     self.musl = musl
     self.qt = qt
 
@@ -90,10 +92,13 @@ class BranchProfile(BranchVersions):
 
 BRANCHES = {
   'main': BranchVersions(
+    mimalloc = '3.0.11',
     musl = '1.2.5',
     qt = '6.10.1',
   ),
   'time32': BranchVersions(
+    # mimalloc 3.0 fails to meta allocate tld on i686 (exceeds size limit)
+    mimalloc = '2.2.4',
     musl = '1.1.24',
     qt = '6.8.3',
   ),
