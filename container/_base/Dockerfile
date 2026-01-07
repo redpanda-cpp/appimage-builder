@@ -4,7 +4,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     apt update && \
     apt install --no-install-recommends -y \
         # Red Panda C++
-        cmake git make qemu-user \
+        ca-certificates cmake git make qemu-user \
         fonts-noto fonts-noto-cjk fonts-noto-color-emoji \
         # appimage tools
         squashfs-tools && \
