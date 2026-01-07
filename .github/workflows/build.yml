@@ -20,9 +20,33 @@ jobs:
           path: |
             assets
 
+  build_container_base:
+    name: Build container base
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build container base
+        run: |
+          podman build \
+            -t redpanda-cpp/basic-appimage-builder \
+            container/_base
+
+          podman save \
+            -o basic-appimage-builder.tar \
+            redpanda-cpp/basic-appimage-builder
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: container-base
+          path: |
+            basic-appimage-builder.tar
+
   build:
     name: Build
-    needs: [download_source]
+    needs: [download_source, build_container_base]
     strategy:
       fail-fast: false
       matrix:
@@ -70,12 +94,20 @@ jobs:
           name: ${{ matrix.arch }}
           path: container/${{ matrix.arch }}/qt.tar
 
-      - name: OCI image
-        uses: macbre/push-to-ghcr@master
+      - uses: actions/download-artifact@v4
+        with:
+          name: container-base
+          path: assets
+
+      - name: Load container base
+        run: |
+          docker load -i assets/basic-appimage-builder.tar
+
+      - uses: macbre/push-to-ghcr@master
         if: github.ref_type == 'tag'
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          image_name: redpanda-cpp/appimage-builder-${{ matrix.arch }}
+          image_name: ${{ github.repository }}-${{ matrix.arch }}
           dockerfile: container/${{ matrix.arch }}/Dockerfile
           context: container/${{ matrix.arch }}
           image_tag: ${{ github.ref_name }}

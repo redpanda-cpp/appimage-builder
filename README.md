@@ -36,5 +36,6 @@ Please refer to [Red Panda C++’s document](https://github.com/royqh1979/RedPan
 ### Build the Container Image
 
 ```
+podman build -t redpanda-cpp/basic-appimage-builder container/_base
 podman build -t redpanda-cpp/appimage-builder-<arch> container/<arch>
 ```
