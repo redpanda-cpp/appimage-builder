@@ -584,7 +584,6 @@ def _qtbase(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace)
       # build options
       '-cmake-generator', 'Ninja',
       '-release',
-      '-optimize-size',
       '-gc-binaries',
       '-static',
       '-platform', 'linux-g++',
@@ -800,6 +799,8 @@ def _appimage_runtime(ver: BranchProfile, paths: ProjectPaths, config: argparse.
     copyfile(build_dir / 'appimage-runtime', bin_dir / 'appimage-runtime')
 
 def build_target_lib(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
+  v_qt = Version(ver.qt)
+
   # misc: round 1
   _expat(ver, paths, config)
   _ffi(ver, paths, config)
@@ -844,7 +845,10 @@ def build_target_lib(ver: BranchProfile, paths: ProjectPaths, config: argparse.N
   _qtsvg(ver, paths, config)
   _qttools(ver, paths, config)
   _qttranslations(ver, paths, config)
-  _qtwayland(ver, paths, config)
+  if v_qt < Version('6.10'):
+    _qtwayland(ver, paths, config)
+  else:
+    ensure(paths.layer_target.qtwayland / 'usr/local')
   _fcitx_qt(ver, paths, config)
 
   # appimage

@@ -226,6 +226,8 @@ def _qtwayland(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespa
     cmake_destdir_install(build_dir, paths.layer_host.qtwayland)
 
 def build_host_lib(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
+  v_qt = Version(ver.qt)
+
   os.environ['PKG_CONFIG_PATH'] = '/usr/local/lib/pkgconfig'
 
   # host meson
@@ -247,6 +249,9 @@ def build_host_lib(ver: BranchProfile, paths: ProjectPaths, config: argparse.Nam
   # host Qt
   _qtbase(ver, paths, config)
   _qttools(ver, paths, config)
-  _qtwayland(ver, paths, config)
+  if v_qt < Version('6.10'):
+    _qtwayland(ver, paths, config)
+  else:
+    ensure(paths.layer_host.qtwayland / 'usr/local')
 
   del os.environ['PKG_CONFIG_PATH']

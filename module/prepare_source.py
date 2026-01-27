@@ -524,6 +524,8 @@ def _zstd(ver: BranchProfile, paths: ProjectPaths, download_only: bool):
     _patch_done(paths.src_dir.zstd)
 
 def prepare_source(ver: BranchProfile, paths: ProjectPaths, download_only: bool):
+  v_qt = Version(ver.qt)
+
   _appimage_runtime(ver, paths, download_only)
   _binutils(ver, paths, download_only)
   _dbus(ver, paths, download_only)
@@ -547,7 +549,8 @@ def prepare_source(ver: BranchProfile, paths: ProjectPaths, download_only: bool)
   _qtsvg(ver, paths, download_only)
   _qttools(ver, paths, download_only)
   _qttranslations(ver, paths, download_only)
-  _qtwayland(ver, paths, download_only)
+  if v_qt < Version('6.10'):
+    _qtwayland(ver, paths, download_only)
   _squashfuse(ver, paths, download_only)
   _wayland(ver, paths, download_only)
   _x(ver, paths, download_only)
