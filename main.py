@@ -106,7 +106,7 @@ def package(paths: ProjectPaths):
   layers = []
   for layer_group in (paths.layer_host, paths.layer_x, paths.layer_target):
     for k, v in layer_group._asdict().items():
-      if k in ('prefix', 'freetype_decycle'):
+      if k in ('prefix', 'stub', 'freetype_decycle'):
         continue
       layers.append(v)
 

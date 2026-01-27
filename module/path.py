@@ -66,6 +66,8 @@ class LayerPathsHost(NamedTuple):
 class LayerPathsX(NamedTuple):
   prefix: Path
 
+  stub: Path
+
   binutils: Path
   cmake: Path
   gcc: Path
@@ -261,6 +263,8 @@ class ProjectPaths:
     layer_x_prefix = self.layer_dir / 'x'
     self.layer_x = LayerPathsX(
       prefix = layer_x_prefix,
+
+      stub = layer_x_prefix / 'stub',
 
       binutils = layer_x_prefix / 'binutils',
       cmake = layer_x_prefix / 'cmake',

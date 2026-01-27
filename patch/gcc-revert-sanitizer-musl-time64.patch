@@ -1,0 +1,32 @@
+diff --git a/libsanitizer/sanitizer_common/sanitizer_platform.h b/libsanitizer/sanitizer_common/sanitizer_platform.h
+index 57966403c92..79647dc3e18 100644
+--- a/libsanitizer/sanitizer_common/sanitizer_platform.h
++++ b/libsanitizer/sanitizer_common/sanitizer_platform.h
+@@ -129,12 +129,7 @@
+ #  define SANITIZER_FUCHSIA 0
+ #endif
+ 
+-// Assume linux that is not glibc or android is musl libc.
+-#if SANITIZER_LINUX && !SANITIZER_GLIBC && !SANITIZER_ANDROID
+-#  define SANITIZER_MUSL 1
+-#else
+-#  define SANITIZER_MUSL 0
+-#endif
++#define SANITIZER_MUSL 0
+ 
+ #define SANITIZER_POSIX                                     \
+   (SANITIZER_FREEBSD || SANITIZER_LINUX || SANITIZER_APPLE || \
+diff --git a/libsanitizer/sanitizer_common/sanitizer_platform_limits_posix.h b/libsanitizer/sanitizer_common/sanitizer_platform_limits_posix.h
+index cfac4903b76..fd06472829e 100644
+--- a/libsanitizer/sanitizer_common/sanitizer_platform_limits_posix.h
++++ b/libsanitizer/sanitizer_common/sanitizer_platform_limits_posix.h
+@@ -380,8 +380,7 @@ struct __sanitizer_group {
+   char **gr_mem;
+ };
+ 
+-#  if (SANITIZER_LINUX && !SANITIZER_GLIBC && !SANITIZER_ANDROID) || \
+-      (defined(__x86_64__) && !defined(_LP64)) || defined(__hexagon__)
++#  if (defined(__x86_64__) && !defined(_LP64)) || defined(__hexagon__)
+ typedef long long __sanitizer_time_t;
+ #else
+ typedef long __sanitizer_time_t;

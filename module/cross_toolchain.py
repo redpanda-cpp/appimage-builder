@@ -27,6 +27,12 @@ def _linux_headers(ver: BranchProfile, paths: ProjectPaths, config: argparse.Nam
     f'INSTALL_HDR_PATH={prefix}',
   ], config.jobs)
 
+def _stub(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
+  limits_h = paths.layer_x.stub / f'usr/local/{ver.target}/sys-include/limits.h'
+  ensure(limits_h.parent)
+  with open(limits_h, 'w'):
+    pass
+
 def _binutils(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
   build_dir = paths.src_dir.binutils / 'build-x'
   ensure(build_dir)
@@ -59,6 +65,8 @@ def _gcc(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
     paths.layer_host.mpfr / 'usr/local',
     paths.layer_host.mpc / 'usr/local',
 
+    paths.layer_x.stub / 'usr/local',
+
     paths.layer_x.binutils / 'usr/local',
   ]):
     configure(build_dir, [
@@ -76,7 +84,7 @@ def _gcc(ver: BranchProfile, paths: ProjectPaths, config: argparse.Namespace):
       '--enable-host-pie',
       '--enable-languages=c,c++',
       '--disable-libgomp',
-      '--disable-libsanitizer',
+      '--enable-libsanitizer',
       '--enable-lto',
       '--disable-multilib',
       '--disable-nls',
@@ -203,6 +211,8 @@ def build_cross_toolchain(ver: BranchProfile, paths: ProjectPaths, config: argpa
   _cmake(ver, paths, config)
 
   _linux_headers(ver, paths, config)
+
+  _stub(ver, paths, config)
 
   _binutils(ver, paths, config)
 

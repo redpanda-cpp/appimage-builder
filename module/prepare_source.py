@@ -209,6 +209,9 @@ def _gcc(ver: BranchProfile, paths: ProjectPaths, download_only: bool):
     return
 
   if _check_and_extract(paths.src_dir.gcc, paths.src_arx.gcc):
+    v_musl = Version(ver.musl)
+    if v_musl < Version('1.2'):
+      _patch(paths.src_dir.gcc, paths.patch_dir / 'gcc-revert-sanitizer-musl-time64.patch')
     _sed(paths.src_dir.gcc / 'gcc/config/i386/t-linux64', '/m64=/s/lib64/lib/')
     _patch_done(paths.src_dir.gcc)
 
